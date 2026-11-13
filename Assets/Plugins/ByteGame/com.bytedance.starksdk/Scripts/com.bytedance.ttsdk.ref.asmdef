@@ -1,0 +1,4 @@
+{
+	"name": "com.bytedance.ttsdk.ref",
+    "references": ["Unity.ugui"]
+}
