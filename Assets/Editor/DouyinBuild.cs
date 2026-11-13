@@ -14,7 +14,7 @@ public static class DouyinBuild
             var serializedSettings = new SerializedObject(settings);
             serializedSettings.FindProperty("_orientation").intValue = 1; // SDK: Portrait=0, Landscape=1.
             serializedSettings.ApplyModifiedPropertiesWithoutUndo();
-            settings.OutputDir = System.IO.Path.GetFullPath("Builds/DouyinM3UI");
+            settings.OutputDir = System.IO.Path.GetFullPath("Builds/DouyinM5");
             settings.framework = TTSDK.Tool.Framework.Wasm;
             settings.isOldBuildFormat = false;
             settings.dataLoadType = TTSDK.Tool.DataLoadType.Package;
@@ -36,6 +36,8 @@ public static class DouyinBuild
             Debug.Log("SDK_FIELD " + f.Name + " " + f.FieldType + (f.FieldType.IsEnum ? " " + string.Join(",", Enum.GetNames(f.FieldType)) : ""));
     }
 }
+
+
 
 
 

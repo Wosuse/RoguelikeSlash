@@ -40,7 +40,7 @@ public sealed partial class ArenaPrototype : MonoBehaviour
     void Update()
     {
         if (hp == 0) return;
-        elapsed += Time.deltaTime;
+        elapsed += Time.deltaTime * ClockRate;
         ReadTouch();
         float x = (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0);
         float y = (Input.GetKey(KeyCode.W) ? 1 : 0) - (Input.GetKey(KeyCode.S) ? 1 : 0);
@@ -82,30 +82,29 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         }
     }
 
-    void FixedUpdate() => body.velocity = Dashing ? aim * (dashDistance / dashDuration) : move * (moveSpeed * SkillMoveScale);
+    void FixedUpdate() => body.velocity = Dashing ? aim * (dashDistance / dashDuration) : move * (moveSpeed * SkillMoveScale * (BulletTime ? bulletTimePlayerSpeed : 1f));
 
     void LateUpdate()
     {
         var p = body.transform.position;
         view.transform.position = new Vector3(p.x, p.y, -10);
+        LateSkillVisuals();
     }
 
     void Retry()
     {
         ClearInput();
+        if (dashTrail) { dashTrail.emitting = false; dashTrail.Clear(); }
         body.position = Vector2.zero;
         body.velocity = Vector2.zero;
         hp = 100;
         elapsed = nextHit = 0;
         ResetCombat();
         InterruptSkill();
+        fusion = Fusion.None;
+        castingFusion = false;
+        ClearArcs();
         System.Array.Clear(readyAt, 0, readyAt.Length);
     }
 
 }
-
-
-
-
-
-

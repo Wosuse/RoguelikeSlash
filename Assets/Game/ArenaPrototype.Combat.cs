@@ -12,7 +12,7 @@ public sealed partial class ArenaPrototype
         public EnemyKind Kind;
         public Vector2 Position, Direction;
         public float Timer, Rush, Aim;
-        public int Health;
+        public int Health, SpawnId;
         public bool Hostile;
     }
 
@@ -21,7 +21,23 @@ public sealed partial class ArenaPrototype
     readonly Stack<Actor> enemyPool = new Stack<Actor>();
     readonly Stack<Actor> bulletPool = new Stack<Actor>();
     [SerializeField, Range(0, 1.2f)] float enemySpacing = 0.8f;
-    int kills;
+    [SerializeField, Min(0.05f)] float meleeWarningTime = 0.3f;
+    [SerializeField, Min(0.1f)] float meleeAttackRange = 1.15f;
+    int kills, spawnSequence;
+
+    bool IsMeleeWarning(Actor enemy) => enemy.Kind != EnemyKind.Shooter &&
+        enemy.Aim > 0f && enemy.Aim <= meleeWarningTime;
+
+    bool InWarnedAttackRange()
+    {
+        foreach (var enemy in enemies)
+        {
+            if (!IsMeleeWarning(enemy)) continue;
+            float range = enemy.Kind == EnemyKind.Charger ? 2.4f : meleeAttackRange;
+            if ((body.position - enemy.Position).sqrMagnitude <= range * range) return true;
+        }
+        return false;
+    }
     float nextSpawn, nextShot;
     static readonly Color ChaserColor = new Color(0.94f, 0.27f, 0.32f);
     static readonly Color ChargerColor = new Color(1f, 0.60f, 0.22f);
@@ -87,7 +103,7 @@ public sealed partial class ArenaPrototype
                 closest = enemy;
                 closestDistance = delta.sqrMagnitude;
             }
-            TickEnemy(enemy, delta.normalized, distance, dt);
+            TickEnemy(enemy, delta.normalized, distance, dt * EnemyTimeMultiplier);
             if (hp == 0) return;
         }
 
@@ -106,9 +122,10 @@ public sealed partial class ArenaPrototype
 
         for (int i = bullets.Count - 1; i >= 0; i--)
         {
-            TickBullet(i, dt);
+            TickBullet(i, bullets[i].Hostile ? dt * EnemyTimeMultiplier : dt);
             if (hp == 0) return;
         }
+        FlushGuardStrike();
     }
 
     void SeparateEnemies()
@@ -157,6 +174,7 @@ public sealed partial class ArenaPrototype
         var color = kind == EnemyKind.Charger ? ChargerColor : kind == EnemyKind.Shooter ? ShooterColor : ChaserColor;
         var actor = Rent(enemyPool, (Vector2)view.transform.position + offset, 0.8f, color);
         actor.Kind = kind;
+        actor.SpawnId = ++spawnSequence;
         ApplyLook(actor.Material, kind == EnemyKind.Charger ? chargerLook : kind == EnemyKind.Shooter ? shooterLook : chaserLook, color);
         actor.Health = kind == EnemyKind.Charger ? 80 : kind == EnemyKind.Shooter ? 40 : 30;
         actor.Object.name = kind.ToString();
@@ -171,6 +189,7 @@ public sealed partial class ArenaPrototype
         {
             enemy.Rush -= dt;
             velocity = enemy.Direction * 8;
+            DetectDodgedAttack(enemy.Position, velocity * dt, 1.15f, dt);
             if (distance < 1.15f) DamagePlayer(18);
         }
         else if (enemy.Aim > 0)
@@ -178,7 +197,13 @@ public sealed partial class ArenaPrototype
             enemy.Aim -= dt;
             if (enemy.Aim <= 0)
             {
-                if (enemy.Kind == EnemyKind.Charger)
+                if (enemy.Kind == EnemyKind.Chaser)
+                {
+                    if (distance <= meleeAttackRange) DamagePlayer(9);
+                    enemy.Timer = 0.8f;
+                    ApplyLook(enemy.Material, chaserLook, ChaserColor);
+                }
+                else if (enemy.Kind == EnemyKind.Charger)
                 {
                     enemy.Rush = 0.38f;
                     enemy.Timer = 1.6f;
@@ -197,10 +222,10 @@ public sealed partial class ArenaPrototype
         else if (enemy.Kind == EnemyKind.Chaser)
         {
             if (distance > 0.66f) velocity = toward * 2;
-            if (distance < 0.9f && enemy.Timer <= 0)
+            if (distance <= meleeAttackRange && enemy.Timer <= 0)
             {
-                DamagePlayer(9);
-                enemy.Timer = 0.8f;
+                enemy.Aim = meleeWarningTime;
+                velocity = Vector2.zero;
             }
         }
         else
@@ -254,10 +279,12 @@ public sealed partial class ArenaPrototype
             Return(bullets, index, bulletPool);
             return;
         }
+        if (shot.Hostile) DetectDodgedAttack(shot.Position, step, 0.55f, dt);
         if (shot.Hostile && SegmentHit(shot.Position, step, body.position, 0.55f, out _))
         {
             if (Parrying)
             {
+                if (BaseGuardPressed) tapGuardUsed = true;
                 PlaySound(parrySound);
                 var reflectedDirection = -shot.Direction;
                 Return(bullets, index, bulletPool);
@@ -322,15 +349,33 @@ public sealed partial class ArenaPrototype
 
     void DamagePlayer(int damage)
     {
-        if (hp <= 0 || elapsed < nextHit || Dashing && dashUntil - Time.fixedTime > 0.12f) return;
+        if (BaseGuardPressed)
+        {
+            if (cast == Cast.Pending) tapGuardUsed = true;
+            return;
+        }
+        if (hp <= 0 || Dodging || PerfectCounter) return;
         if (Parrying)
         {
+            if (elapsed < nextHit) return;
             nextHit = elapsed + 0.3f;
             PlaySound(parrySound);
             counterPending = true;
             return;
         }
-        if (cast == Cast.Holding && skill == Skill.Guard)
+        if (elapsed < nextHit) return;
+        if (Dashing && dashUntil - Time.fixedTime > 0.12f) return;
+        if (HoldingGuardSlash)
+        {
+            damage = Mathf.CeilToInt(damage * guardSlashDamageMultiplier);
+            if (guardRemaining > 0 && elapsed >= nextGuardStrike)
+            {
+                guardRemaining--;
+                guardStrikeQueued = true;
+                nextGuardStrike = elapsed + 0.35f;
+            }
+        }
+        else if (cast == Cast.Holding && (skill == Skill.Guard || castingFusion && fusion == Fusion.GuardDash))
         {
             guardCharge = Mathf.Min(guardCharge + 1, 4);
             damage = Mathf.CeilToInt(damage * guardDamageMultiplier);
@@ -350,11 +395,8 @@ public sealed partial class ArenaPrototype
         while (enemies.Count > 0) Return(enemies, enemies.Count - 1, enemyPool);
         while (bullets.Count > 0) Return(bullets, bullets.Count - 1, bulletPool);
         counterPending = false;
+        perfectNoticeUntil = 0;
         kills = 0;
         nextSpawn = nextShot = 0;
     }
 }
-
-
-
-

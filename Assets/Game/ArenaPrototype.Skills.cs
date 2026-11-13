@@ -5,10 +5,11 @@ public sealed partial class ArenaPrototype
     enum Skill { Guard, Dash, Slash }
     enum Cast { Idle, Pending, Holding, Active }
     readonly float[] readyAt = new float[3];
+    readonly float[] cooldownLengths = new float[3];
     Cast cast;
     Skill skill;
     int skillFinger;
-    float castAt, finishAt, nextSpin;
+    float castAt, holdStarted, activeStarted, finishAt, nextSpin;
     int guardCharge;
     bool shortParry, counterPending;
     Vector2 pressPoint, aim, facing = Vector2.right;
@@ -21,6 +22,13 @@ public sealed partial class ArenaPrototype
         if (skillEffect && elapsed >= effectUntil) skillEffect.enabled = false;
         if (cast == Cast.Active)
         {
+            if (castingFusion && fusion == Fusion.GuardSlash)
+            {
+                if (!TickGuardSlash()) FinishSkill();
+                return;
+            }
+            if (castingFusion) TickArcs();
+            TickGuardWave();
             if (elapsed >= finishAt && !Dashing) FinishSkill();
             return;
         }
@@ -41,7 +49,7 @@ public sealed partial class ArenaPrototype
         bool released = !Input.GetMouseButton(0), canceled = false;
         if (skillFinger >= 0)
         {
-            canceled = true;
+            released = true;
             for (int i = 0; i < Input.touchCount; i++)
             {
                 var touch = Input.GetTouch(i);
@@ -57,17 +65,36 @@ public sealed partial class ArenaPrototype
             InterruptSkill();
             return;
         }
+        if (cast == Cast.Pending && HandleFusionGesture(point, released)) return;
         if (cast == Cast.Pending && elapsed - castAt >= holdThreshold)
         {
             cast = Cast.Holding;
+            holdStarted = elapsed;
             nextSpin = elapsed;
+        }
+        if (!castingFusion && skill == Skill.Slash && cast == Cast.Holding && elapsed - holdStarted >= slashHoldLimit)
+        {
+            ReleaseSkill();
+            return;
+        }
+        if (BaseGuardPressed && cast == Cast.Holding && elapsed - castAt >= baseGuardLimit)
+        {
+            ReleaseSkill();
+            return;
+        }
+        if (cast == Cast.Holding && castingFusion && fusion == Fusion.GuardSlash &&
+            (elapsed - holdStarted >= guardTime || guardRemaining == 0))
+        {
+            ReleaseSkill();
+            return;
         }
         if (cast == Cast.Holding)
         {
             var drag = point - pressPoint;
-            if (skill == Skill.Dash && drag.sqrMagnitude > 144f * UiScale * UiScale) aim = drag.normalized;
-            if (skill == Skill.Dash && !released) DrawSkillEffect(aim, 0.08f);
-            if (skill == Skill.Slash && !released && elapsed >= nextSpin)
+            if (CanAim)
+                aim = drag.sqrMagnitude > 144f * UiScale * UiScale ? drag.normalized : facing;
+            if (CanAim && !released) DrawSkillEffect(aim, 0.08f);
+            if (!castingFusion && skill == Skill.Slash && !released && elapsed >= nextSpin)
             {
                 Ring(spinDamage, slashRadius);
                 nextSpin = elapsed + spinInterval;
@@ -79,15 +106,29 @@ public sealed partial class ArenaPrototype
     bool BeginSkill(Vector2 point, int pointer)
     {
         var guiPoint = new Vector2(point.x, Screen.height - point.y) / UiScale;
+        if (fusion != Fusion.None && CancelFusionRect().Contains(guiPoint))
+        {
+            fusion = Fusion.None;
+            return true;
+        }
         for (int i = 0; i < readyAt.Length; i++)
         {
-            if (elapsed < readyAt[i] || !SkillRect(i).Contains(guiPoint)) continue;
+            if (HiddenByFusion(i) || elapsed < readyAt[i] || !SkillRect(i).Contains(guiPoint)) continue;
             skill = (Skill)i;
+            castingFusion = fusion != Fusion.None && i == fusionTarget;
+            draggingSkill = false;
             skillFinger = pointer;
             castAt = elapsed;
             pressPoint = point;
             aim = facing;
             guardCharge = 0;
+            tapGuardUsed = baseGuardTap = false;
+            if (!castingFusion && skill == Skill.Guard) PlaySound(guardSound);
+                        if (castingFusion && fusion == Fusion.GuardSlash)
+            {
+                ResetGuardSlash();
+                perfectDodge = InWarnedAttackRange();
+            }
             cast = Cast.Pending;
             return true;
         }
@@ -98,27 +139,22 @@ public sealed partial class ArenaPrototype
     {
         bool held = cast == Cast.Holding;
         cast = Cast.Active;
-        if (skill != Skill.Slash) PlaySound(skill == Skill.Guard ? guardSound : dashSound);
+        activeStarted = elapsed;
+        shortParry = false;
+        if (castingFusion) { ReleaseFusion(held); return; }
+        if (skill == Skill.Dash) PlaySound(dashSound);
         if (skill == Skill.Guard)
         {
-            finishAt = elapsed + (held ? 0.16f : parryWindow);
-            shortParry = !held;
-            if (held && guardCharge > 0) Ring(Mathf.Min(48, guardCharge * 14), slashRadius);
+            baseGuardTap = !held;
+            if (held) StartGuardWave();
+            else FinishSkill();
         }
         else if (skill == Skill.Dash)
         {
             finishAt = elapsed + 0.2f;
             if (held)
             {
-                Vector2 right = new Vector2(-aim.y, aim.x);
-                for (int i = enemies.Count - 1; i >= 0; i--)
-                {
-                    var delta = enemies[i].Position - body.position;
-                    float forward = Vector2.Dot(delta, aim);
-                    if (forward >= 0 && forward <= 4.5f && Mathf.Abs(Vector2.Dot(delta, right)) <= 0.8f)
-                        HitEnemy(i, aimedDamage, aim);
-                }
-                DrawSkillEffect(aim, 0.2f);
+                RectangleAttack(aimedDamage);
             }
             else
             {
@@ -129,27 +165,48 @@ public sealed partial class ArenaPrototype
         }
         else
         {
-            finishAt = elapsed + 0.16f;
-            if (!held) Ring(slashDamage, slashRadius);
+            finishAt = held ? Mathf.Max(elapsed, sweepStarted + SweepTime) : elapsed + SweepTime;
+            shortSlash = !held;
+            if (shortSlash) Ring(slashDamage, slashRadius);
         }
     }
 
     float dashUntil;
-    bool Dashing => cast == Cast.Active && skill == Skill.Dash && Time.fixedTime < dashUntil;
-    bool Parrying => cast == Cast.Active && skill == Skill.Guard && shortParry;
-    float SkillMoveScale => cast != Cast.Holding ? 1f : skill == Skill.Guard ? 0.55f : skill == Skill.Slash ? 0.75f : 0f;
+    bool Dashing => cast == Cast.Active && (castingFusion || skill == Skill.Dash) && Time.fixedTime < dashUntil;
+    bool Parrying => BaseGuardPressed && cast == Cast.Pending || cast == Cast.Active && shortParry && castingFusion && Dashing;
+    float SkillMoveScale => shortSlash ? 0f : cast != Cast.Holding ? 1f : castingFusion ? (fusion == Fusion.GuardSlash ? 0.6f : 0f) : skill == Skill.Guard ? 0.55f : skill == Skill.Slash ? 0.75f : aimedMoveMultiplier;
 
     void FinishSkill()
     {
-        readyAt[(int)skill] = elapsed + skillCooldown;
+        if (castingFusion)
+        {
+            cooldownLengths[fusionTarget] = cooldownLengths[fusionSource] = fusionCooldown;
+            readyAt[fusionTarget] = readyAt[fusionSource] = elapsed + fusionCooldown;
+            fusion = Fusion.None;
+        }
+        else
+        {
+            cooldownLengths[(int)skill] = baseGuardTap ? tapGuardCooldown : skillCooldown;
+            readyAt[(int)skill] = elapsed + cooldownLengths[(int)skill];
+        }
+        castingFusion = false;
+        ClearArcs();
+        ClearBaseEffects();
+        ResetGuardSlash();
         cast = Cast.Idle;
         dashUntil = 0;
     }
 
     void InterruptSkill()
     {
-        if (cast == Cast.Active || cast == Cast.Holding) FinishSkill();
+        if (cast == Cast.Active || cast == Cast.Holding || tapGuardUsed && cast == Cast.Pending)
+        {
+            if (cast == Cast.Pending) baseGuardTap = true;
+            FinishSkill();
+        }
         else cast = Cast.Idle;
+        draggingSkill = false;
+        sweepStarted = -1f;
         if (skillEffect) skillEffect.enabled = false;
     }
 
@@ -161,7 +218,8 @@ public sealed partial class ArenaPrototype
             if (delta.sqrMagnitude <= radius * radius) HitEnemy(i, damage, delta.normalized);
         }
         PlaySound(slashSound);
-        DrawSkillEffect(Vector2.zero, 0.16f, radius);
+        sweepStarted = elapsed;
+        sweepRadius = radius;
     }
 
     void DrawSkillEffect(Vector2 direction, float duration, float radius = 2.2f)
