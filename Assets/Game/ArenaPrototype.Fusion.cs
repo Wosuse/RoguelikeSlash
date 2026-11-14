@@ -4,9 +4,6 @@ using UnityEngine;
 public sealed partial class ArenaPrototype
 {
     enum Fusion { None, GuardDash, DashSlash, GuardSlash }
-    [Header("Fusion")]
-    [SerializeField, Min(0)] float fusionCooldown = 12f;
-    [SerializeField, Min(0.05f)] float arcTravelTime = 0.36f;
     Fusion fusion;
     bool castingFusion, draggingSkill, waitingForArcs;
     Vector2 dragPoint, dashStart;
@@ -77,7 +74,7 @@ public sealed partial class ArenaPrototype
         }
         if (fusion == Fusion.GuardDash)
         {
-            RectangleAttack(aimedDamage + guardCharge * 10);
+            RectangleAttack(aimedDamage + guardCharge * (guardDashTuning ? guardDashTuning.damagePerCharge : 10));
             finishAt = elapsed + 0.2f;
             PlaySound(guardSound);
         }
@@ -87,11 +84,13 @@ public sealed partial class ArenaPrototype
     void RectangleAttack(int damage)
     {
         Vector2 right = new Vector2(-aim.y, aim.x);
+        float reach = guardDashTuning ? guardDashTuning.counterReach : 4.5f;
+        float halfWidth = guardDashTuning ? guardDashTuning.counterHalfWidth : 0.8f;
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
             Vector2 delta = enemies[i].Position - body.position;
             float forward = Vector2.Dot(delta, aim);
-            if (forward >= 0 && forward <= 4.5f && Mathf.Abs(Vector2.Dot(delta, right)) <= 0.8f)
+            if (forward >= 0 && forward <= reach && Mathf.Abs(Vector2.Dot(delta, right)) <= halfWidth)
                 HitEnemy(i, damage, aim);
         }
         DrawSkillEffect(aim, 0.2f);
@@ -111,13 +110,15 @@ public sealed partial class ArenaPrototype
             if (!arcLines[i])
             {
                 var line = new GameObject("Traveling slash").AddComponent<LineRenderer>();
-                line.transform.SetParent(transform);
-                line.sharedMaterial = skillEffectMaterial ? skillEffectMaterial : spriteMaterial;
+                line.transform.SetParent(EffectParent);
+                line.sharedMaterial = spriteMaterial;
                 line.startColor = line.endColor = skillEffectColor;
                 line.startWidth = line.endWidth = 0.12f;
                 line.positionCount = 13;
                 arcLines[i] = line;
             }
+            arcLines[i].sharedMaterial = FusionMaterial((int)fusion - 1);
+            arcLines[i].startColor = arcLines[i].endColor = FusionColor((int)fusion - 1);
             arcLines[i].enabled = true;
         }
         PlaySound(slashSound);

@@ -20,9 +20,6 @@ public sealed partial class ArenaPrototype
     readonly List<Actor> bullets = new List<Actor>(160);
     readonly Stack<Actor> enemyPool = new Stack<Actor>();
     readonly Stack<Actor> bulletPool = new Stack<Actor>();
-    [SerializeField, Range(0, 1.2f)] float enemySpacing = 0.8f;
-    [SerializeField, Min(0.05f)] float meleeWarningTime = 0.3f;
-    [SerializeField, Min(0.1f)] float meleeAttackRange = 1.15f;
     int kills, spawnSequence;
 
     bool IsMeleeWarning(Actor enemy) => enemy.Kind != EnemyKind.Shooter &&
@@ -50,7 +47,7 @@ public sealed partial class ArenaPrototype
         {
             var obj = GameObject.CreatePrimitive(PrimitiveType.Quad);
             Destroy(obj.GetComponent<Collider>());
-            obj.transform.SetParent(transform);
+            obj.transform.SetParent(pool == enemyPool && enemyInstances ? enemyInstances : transform);
             var material = new Material(spriteMaterial);
             obj.GetComponent<Renderer>().sharedMaterial = material;
             actor = new Actor { Object = obj, Material = material };
@@ -262,6 +259,8 @@ public sealed partial class ArenaPrototype
         ApplyLook(shot.Material, hostile ? enemyBulletLook : playerBulletLook, shot.Material.color);
         PlaySound(hostile ? enemyShotSound : shotSound);
         shot.Hostile = hostile;
+        Transform container = hostile ? enemyShots : playerShots;
+        if (container) shot.Object.transform.SetParent(container);
         shot.Direction = direction;
         shot.Timer = 4;
         shot.Object.name = hostile ? "Enemy projectile" : "Player projectile";

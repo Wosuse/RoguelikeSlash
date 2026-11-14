@@ -3,19 +3,6 @@ using UnityEngine;
 
 public sealed partial class ArenaPrototype
 {
-    [Header("Base skill tuning")]
-    [SerializeField, Range(0, 1)] float aimedMoveMultiplier = 0.55f;
-    [SerializeField, Min(0)] float tapGuardCooldown = 2.5f;
-    [SerializeField, Min(0.3f)] float baseGuardLimit = 3f;
-    [SerializeField, Min(0.1f)] float guardWaveSpeed = 2f, guardWaveLifetime = 1.8f;
-    [SerializeField, Min(0.1f)] float guardRadius = 1.05f;
-    [SerializeField, Min(1)] int guardWaveDamage = 35;
-    [SerializeField] Color tapGuardColor = new Color(1f, 0.82f, 0.27f);
-    [SerializeField] Color holdGuardColor = new Color(0.72f, 0.55f, 0.26f);
-    [SerializeField] Color ringSlashColor = new Color(0.26f, 0.67f, 1f);
-
-    [SerializeField] Color dashTrailColor = new Color(1f, 0.22f, 0.25f);
-    [SerializeField, Min(0.02f)] float dashTrailLifetime = 0.22f;
     TrailRenderer dashTrail;
 
     void TickDashTrail()
@@ -27,7 +14,7 @@ public sealed partial class ArenaPrototype
             trailObject.transform.SetParent(body.transform, false);
             trailObject.transform.localPosition = new Vector3(0, 0, -0.1f);
             dashTrail = trailObject.AddComponent<TrailRenderer>();
-            dashTrail.sharedMaterial = skillEffectMaterial ? skillEffectMaterial : spriteMaterial;
+            dashTrail.sharedMaterial = spriteMaterial;
             dashTrail.startWidth = 0.62f;
             dashTrail.endWidth = 0.04f;
             dashTrail.minVertexDistance = 0.035f;
@@ -42,8 +29,6 @@ public sealed partial class ArenaPrototype
         dashTrail.emitting = emitting;
     }
 
-    [SerializeField, Min(0.1f)] float slashHoldLimit = 3f;
-    [SerializeField, Min(0.05f)] float slashSweepWidth = 0.24f;
     LineRenderer stanceLine, sweepLine, waveLine;
     bool tapGuardUsed, guardWaveActive, shortSlash, baseGuardTap;
     Vector2 waveOrigin, waveDirection;
@@ -70,7 +55,9 @@ public sealed partial class ArenaPrototype
         float age = Mathf.Clamp(elapsed - waveStarted, 0, guardWaveLifetime);
         Vector2 center = waveOrigin + waveDirection * (age * guardWaveSpeed);
         Vector2 step = waveDirection * (Mathf.Min(age, Time.deltaTime) * guardWaveSpeed);
-        DrawCircle(ref waveLine, "Guard wave", center, guardRadius, holdGuardColor);
+        DrawCircle(ref waveLine, "防御波", center, guardRadius, guardWaveLook ? guardWaveLook.color : holdGuardColor);
+        waveLine.sharedMaterial = guardWaveLook && guardWaveLook.material ? guardWaveLook.material : spriteMaterial;
+        waveLine.startWidth = waveLine.endWidth = guardWaveLook ? guardWaveLook.width : .085f;
         for (int i = enemies.Count - 1; i >= 0; i--)
         {
             var enemy = enemies[i];
@@ -118,8 +105,12 @@ public sealed partial class ArenaPrototype
             if (sweepLine) sweepLine.enabled = false;
             return;
         }
-        var line = SkillLine(ref sweepLine, "Slash sweep", ringSlashColor);
-        line.startWidth = line.endWidth = slashSweepWidth;
+        var line = SkillLine(ref sweepLine, "斩击轨迹", slashSweepLook ? slashSweepLook.color : ringSlashColor);
+        var appearance = guardSlashPhase == GuardSlashPhase.Counter ? counterLook :
+            guardSlashPhase == GuardSlashPhase.FinishGuard ? finishGuardLook : slashSweepLook;
+        if (appearance) line.startColor = line.endColor = appearance.color;
+        line.sharedMaterial = appearance && appearance.material ? appearance.material : spriteMaterial;
+        line.startWidth = line.endWidth = appearance ? appearance.width : slashSweepWidth;
         Vector2 origin = body.transform.position;
         float angle = Mathf.PI * 2f * Mathf.Clamp01((elapsed - sweepStarted) / SweepTime);
         int segments = Mathf.Max(1, Mathf.CeilToInt(angle * 8));
@@ -152,8 +143,8 @@ public sealed partial class ArenaPrototype
         if (!line)
         {
             line = new GameObject(name).AddComponent<LineRenderer>();
-            line.transform.SetParent(transform);
-            line.sharedMaterial = skillEffectMaterial ? skillEffectMaterial : spriteMaterial;
+            line.transform.SetParent(EffectParent);
+            line.sharedMaterial = spriteMaterial;
             line.startWidth = line.endWidth = 0.085f;
         }
         line.startColor = line.endColor = color;

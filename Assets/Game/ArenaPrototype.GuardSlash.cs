@@ -3,13 +3,7 @@ using UnityEngine;
 public sealed partial class ArenaPrototype
 {
     enum GuardSlashPhase { None, Dodge, Counter, FinishGuard }
-    [SerializeField, Min(0.1f)] float counterTime = 3f;
-    [SerializeField, Min(0.1f)] float guardTime = 5f;
-    [SerializeField, Range(0.01f, 1)] float perfectDodgeEnemySpeed = 0.1f;
-    [SerializeField, Range(0, 1)] float guardSlashDamageMultiplier = 0.4f;
     GuardSlashPhase guardSlashPhase;
-    [SerializeField, Range(0f, 0.25f)] float dodgeLookAhead = 0.12f;
-    [SerializeField, Range(0f, 0.5f)] float dodgeTolerance = 0.18f;
     float perfectNoticeUntil;
     bool perfectDodge, guardStrikeQueued;
     int guardRemaining, counterRemaining;
@@ -18,8 +12,6 @@ public sealed partial class ArenaPrototype
     bool HoldingGuardSlash => castingFusion && fusion == Fusion.GuardSlash && cast == Cast.Holding;
     bool Dodging => guardSlashPhase == GuardSlashPhase.Dodge && Dashing;
     bool PerfectCounter => perfectDodge && guardSlashPhase == GuardSlashPhase.Counter;
-    [SerializeField, Range(0.05f, 1f)] float bulletTimeClockRate = 0.3f;
-    [SerializeField, Min(1f)] float bulletTimePlayerSpeed = 1.6f;
     bool BulletTime => perfectDodge && (Dodging || PerfectCounter);
     float EnemyTimeMultiplier => BulletTime ? perfectDodgeEnemySpeed : 1f;
     float ClockRate => BulletTime ? bulletTimeClockRate : 1f;

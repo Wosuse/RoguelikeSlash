@@ -10,40 +10,52 @@ public sealed partial class ArenaPrototype
         public Color tint = Color.white;
     }
 
-    [Header("Movement and skill timing")]
-    [SerializeField, Min(0.1f)] float moveSpeed = 5f;
-    [SerializeField, Min(0.05f)] float holdThreshold = 0.25f;
-    [SerializeField, Min(0)] float skillCooldown = 8f;
-    [SerializeField, Min(0.01f)] float parryWindow = 0.2f;
-    [SerializeField, Min(0.02f)] float dashDuration = 0.2f;
-    [SerializeField, Min(0)] float dashDistance = 3f;
-    [SerializeField, Min(0.01f)] float slashRadius = 2.2f;
-    [SerializeField, Min(0.02f)] float spinInterval = 0.35f;
-    [SerializeField, Min(0)] int slashDamage = 34, spinDamage = 14, aimedDamage = 45;
-    [SerializeField, Range(0, 1)] float guardDamageMultiplier = 0.5f;
-    [Header("Combat timing")]
-    [SerializeField, Min(0.02f)] float autoShotInterval = 0.8f;
-    [SerializeField, Min(0)] float specialEnemyStart = 30f;
-    [Header("Materials, textures and tints")]
-    [SerializeField] Look playerLook = new Look(), chaserLook = new Look(), chargerLook = new Look(),
-        shooterLook = new Look(), playerBulletLook = new Look(), enemyBulletLook = new Look();
-    [SerializeField] Material skillEffectMaterial;
-    [SerializeField] Color skillEffectColor = new Color(0.38f, 1f, 0.79f);
-    [Header("Optional sound effects")]
-    [SerializeField] AudioClip guardSound, parrySound, dashSound, slashSound, shotSound, enemyShotSound, hurtSound;
-    [SerializeField, Range(0, 1)] float soundVolume = 0.75f;
+    [SerializeField, InspectorName("移动与自动射击")] ArenaMovementTuning movement;
+    [SerializeField, InspectorName("敌人生成")] ArenaEnemyTuning enemyTuning;
+    [SerializeField, InspectorName("角色与子弹外观")] ArenaActorAppearance[] actorLooks;
+    [SerializeField, InspectorName("音频管理")] ArenaAudioSettings audioSettings;
+    static readonly Look DefaultLook = new Look();
+
+    float moveSpeed => movement ? movement.speed : 5f;
+    float autoShotInterval => movement ? movement.shotInterval : .8f;
+    float specialEnemyStart => enemyTuning ? enemyTuning.specialStart : 30f;
+    float enemySpacing => enemyTuning ? enemyTuning.spacing : .8f;
+    float meleeWarningTime => enemyTuning ? enemyTuning.warningTime : .3f;
+    float meleeAttackRange => enemyTuning ? enemyTuning.attackRange : 1.15f;
+    const float holdThreshold = .25f, skillCooldown = 8f, fusionCooldown = 12f;
+    static readonly Color skillEffectColor = new Color(.38f, 1, .79f);
+    Look playerLook => ActorLook(0);
+    Look chaserLook => ActorLook(1);
+    Look chargerLook => ActorLook(2);
+    Look shooterLook => ActorLook(3);
+    Look playerBulletLook => ActorLook(4);
+    Look enemyBulletLook => ActorLook(5);
+    AudioClip guardSound => CurrentAudio ? CurrentAudio.guard : null;
+    AudioClip parrySound => CurrentAudio ? CurrentAudio.parry : null;
+    AudioClip dashSound => CurrentAudio ? CurrentAudio.dash : null;
+    AudioClip slashSound => CurrentAudio ? CurrentAudio.slash : null;
+    AudioClip shotSound => audioSettings ? audioSettings.playerShot : null;
+    AudioClip enemyShotSound => audioSettings ? audioSettings.enemyShot : null;
+    AudioClip hurtSound => audioSettings ? audioSettings.hurt : null;
     AudioSource soundSource;
+
+    Look ActorLook(int index)
+    {
+        if (actorLooks == null || index >= actorLooks.Length || !actorLooks[index]) return DefaultLook;
+        var look = actorLooks[index];
+        return new Look { material = look.material, texture = look.texture, tint = look.tint };
+    }
 
     void PlaySound(AudioClip clip)
     {
         if (!clip) return;
         if (!soundSource)
         {
-            soundSource = gameObject.AddComponent<AudioSource>();
+            soundSource = (audioSettings ? audioSettings.gameObject : gameObject).AddComponent<AudioSource>();
             soundSource.playOnAwake = false;
             soundSource.spatialBlend = 0;
         }
-        soundSource.PlayOneShot(clip, soundVolume);
+        soundSource.PlayOneShot(clip, audioSettings ? audioSettings.volume : .75f);
     }
 
     void ApplyLook(Material material, Look look, Color fallback)

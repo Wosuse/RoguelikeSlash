@@ -15,7 +15,14 @@ public sealed partial class ArenaPrototype : MonoBehaviour
 
     void Awake()
     {
+        if (hud) hud.retry.onClick.AddListener(Retry);
         view = Camera.main;
+        if (scenePlayer)
+        {
+            body = scenePlayer;
+            Paint(body.GetComponentInChildren<Renderer>().gameObject, playerLook, new Color(0.27f, 0.92f, 0.73f));
+            return;
+        }
         var player = new GameObject("Player");
         var visual = GameObject.CreatePrimitive(PrimitiveType.Quad);
         visual.transform.SetParent(player.transform, false);
@@ -39,6 +46,7 @@ public sealed partial class ArenaPrototype : MonoBehaviour
 
     void Update()
     {
+        if (hud) hud.Layout();
         if (hp == 0) return;
         elapsed += Time.deltaTime * ClockRate;
         ReadTouch();
@@ -89,6 +97,7 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         var p = body.transform.position;
         view.transform.position = new Vector3(p.x, p.y, -10);
         LateSkillVisuals();
+        UpdateHud();
     }
 
     void Retry()
@@ -105,6 +114,7 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         castingFusion = false;
         ClearArcs();
         System.Array.Clear(readyAt, 0, readyAt.Length);
+        System.Array.Clear(lastCombinationReadyAt, 0, lastCombinationReadyAt.Length);
     }
 
 }

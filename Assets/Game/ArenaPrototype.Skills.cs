@@ -6,6 +6,7 @@ public sealed partial class ArenaPrototype
     enum Cast { Idle, Pending, Holding, Active }
     readonly float[] readyAt = new float[3];
     readonly float[] cooldownLengths = new float[3];
+    readonly float[] lastCombinationReadyAt = new float[3];
     Cast cast;
     Skill skill;
     int skillFinger;
@@ -66,7 +67,7 @@ public sealed partial class ArenaPrototype
             return;
         }
         if (cast == Cast.Pending && HandleFusionGesture(point, released)) return;
-        if (cast == Cast.Pending && elapsed - castAt >= holdThreshold)
+        if (cast == Cast.Pending && elapsed - castAt >= HoldTime)
         {
             cast = Cast.Holding;
             holdStarted = elapsed;
@@ -93,6 +94,11 @@ public sealed partial class ArenaPrototype
             var drag = point - pressPoint;
             if (CanAim)
                 aim = drag.sqrMagnitude > 144f * UiScale * UiScale ? drag.normalized : facing;
+            if (HoldingGuardDash && elapsed - holdStarted >= GuardDashHoldDuration)
+            {
+                ReleaseSkill();
+                return;
+            }
             if (CanAim && !released) DrawSkillEffect(aim, 0.08f);
             if (!castingFusion && skill == Skill.Slash && !released && elapsed >= nextSpin)
             {
@@ -174,19 +180,39 @@ public sealed partial class ArenaPrototype
     float dashUntil;
     bool Dashing => cast == Cast.Active && (castingFusion || skill == Skill.Dash) && Time.fixedTime < dashUntil;
     bool Parrying => BaseGuardPressed && cast == Cast.Pending || cast == Cast.Active && shortParry && castingFusion && Dashing;
-    float SkillMoveScale => shortSlash ? 0f : cast != Cast.Holding ? 1f : castingFusion ? (fusion == Fusion.GuardSlash ? 0.6f : 0f) : skill == Skill.Guard ? 0.55f : skill == Skill.Slash ? 0.75f : aimedMoveMultiplier;
+    bool HoldingGuardDash => castingFusion && fusion == Fusion.GuardDash && cast == Cast.Holding;
+    float GuardDashHoldDuration => guardDashTuning ? Mathf.Max(0.1f, guardDashTuning.holdDuration) : 3f;
+
+    float SkillMoveScale
+    {
+        get
+        {
+            if (shortSlash) return 0f;
+            if (cast != Cast.Holding) return 1f;
+            if (castingFusion)
+            {
+                if (fusion == Fusion.GuardDash)
+                    return guardDashTuning ? guardDashTuning.holdMoveMultiplier : 0.55f;
+                return fusion == Fusion.GuardSlash ? 0.6f : 0f;
+            }
+            if (skill == Skill.Guard) return 0.55f;
+            return skill == Skill.Slash ? 0.75f : aimedMoveMultiplier;
+        }
+    }
 
     void FinishSkill()
     {
         if (castingFusion)
         {
-            cooldownLengths[fusionTarget] = cooldownLengths[fusionSource] = fusionCooldown;
-            readyAt[fusionTarget] = readyAt[fusionSource] = elapsed + fusionCooldown;
+            float cooldown = CurrentOptions ? CurrentOptions.cooldown : fusionCooldown;
+            cooldownLengths[fusionTarget] = cooldownLengths[fusionSource] = cooldown;
+            readyAt[fusionTarget] = readyAt[fusionSource] = elapsed + cooldown;
+            lastCombinationReadyAt[(int)fusion - 1] = elapsed + cooldown;
             fusion = Fusion.None;
         }
         else
         {
-            cooldownLengths[(int)skill] = baseGuardTap ? tapGuardCooldown : skillCooldown;
+            cooldownLengths[(int)skill] = baseGuardTap ? tapGuardCooldown : CurrentOptions ? CurrentOptions.cooldown : skillCooldown;
             readyAt[(int)skill] = elapsed + cooldownLengths[(int)skill];
         }
         castingFusion = false;
@@ -227,11 +253,12 @@ public sealed partial class ArenaPrototype
         if (!skillEffect)
         {
             skillEffect = new GameObject("Skill indicator").AddComponent<LineRenderer>();
-            skillEffect.transform.SetParent(transform);
-            skillEffect.sharedMaterial = skillEffectMaterial ? skillEffectMaterial : spriteMaterial;
+            skillEffect.transform.SetParent(EffectParent);
             skillEffect.startWidth = skillEffect.endWidth = 0.085f;
-            skillEffect.startColor = skillEffect.endColor = skillEffectColor;
         }
+        int visualIndex = castingFusion ? (int)fusion - 1 : -1;
+        skillEffect.sharedMaterial = FusionMaterial(visualIndex);
+        skillEffect.startColor = skillEffect.endColor = FusionColor(visualIndex);
         Vector3 origin = new Vector3(body.position.x, body.position.y, -0.2f);
         bool circle = direction == Vector2.zero;
         skillEffect.loop = true;
@@ -246,8 +273,9 @@ public sealed partial class ArenaPrototype
         }
         else
         {
-            Vector3 edge = new Vector3(-direction.y, direction.x) * 0.8f;
-            Vector3 end = origin + (Vector3)(direction * 4.5f);
+            bool counter = castingFusion && fusion == Fusion.GuardDash && guardDashTuning;
+            Vector3 edge = new Vector3(-direction.y, direction.x) * (counter ? guardDashTuning.counterHalfWidth : 0.8f);
+            Vector3 end = origin + (Vector3)(direction * (counter ? guardDashTuning.counterReach : 4.5f));
             skillEffect.SetPosition(0, origin - edge);
             skillEffect.SetPosition(1, end - edge);
             skillEffect.SetPosition(2, end + edge);
