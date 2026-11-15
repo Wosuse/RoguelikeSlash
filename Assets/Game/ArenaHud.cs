@@ -79,11 +79,25 @@ public sealed class ArenaHud : MonoBehaviour
             target.position = world;
     }
 
-    public void SetScore(int health, string time, int kills)
+    public void SetHealth(float health, float maxHealth)
     {
-        hpLabel.text = $"生命  {health} / 100";
-        hpFill.fillAmount = health / 100f;
-        hpFill.color = health <= 25 ? new Color(1f, .38f, .39f) : healthColor;
+        float fraction = maxHealth > 0 ? Mathf.Clamp01(health / maxHealth) : 0;
+        if (hpLabel && hpLabel.enabled) hpLabel.text = $"生命 {health:0.#} / {maxHealth:0.#}";
+        if (hpFill.sprite && hpFill.type == Image.Type.Filled)
+            hpFill.fillAmount = fraction;
+        else
+        {
+            // A sprite-less Image draws a quad even in Filled mode.
+            hpFill.type = Image.Type.Simple;
+            var scale = hpFill.rectTransform.localScale;
+            scale.x = fraction;
+            hpFill.rectTransform.localScale = scale;
+        }
+        hpFill.color = fraction <= .25f ? new Color(1f, .38f, .39f) : healthColor;
+    }
+
+    public void SetScore(string time, int kills)
+    {
         timeLabel.text = "时间\n" + time;
         killsLabel.text = "击杀\n" + kills;
     }

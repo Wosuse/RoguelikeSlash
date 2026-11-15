@@ -205,6 +205,7 @@ public sealed partial class ArenaPrototype
         if (castingFusion)
         {
             float cooldown = CurrentOptions ? CurrentOptions.cooldown : fusionCooldown;
+            if (runStats) cooldown = runStats.Cooldown(cooldown);
             cooldownLengths[fusionTarget] = cooldownLengths[fusionSource] = cooldown;
             readyAt[fusionTarget] = readyAt[fusionSource] = elapsed + cooldown;
             lastCombinationReadyAt[(int)fusion - 1] = elapsed + cooldown;
@@ -213,6 +214,7 @@ public sealed partial class ArenaPrototype
         else
         {
             cooldownLengths[(int)skill] = baseGuardTap ? tapGuardCooldown : CurrentOptions ? CurrentOptions.cooldown : skillCooldown;
+            if (runStats) cooldownLengths[(int)skill] = runStats.Cooldown(cooldownLengths[(int)skill]);
             readyAt[(int)skill] = elapsed + cooldownLengths[(int)skill];
         }
         castingFusion = false;

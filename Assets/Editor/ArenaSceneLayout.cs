@@ -10,7 +10,8 @@ public static class ArenaSceneLayout
     public static void Organize()
     {
         var arena = Object.FindObjectOfType<ArenaPrototype>();
-        if (!arena || arena.gameObject.scene.name != "GameScene" || arena.transform.Find("玩家")) return;
+        if (!arena || arena.gameObject.scene.name != "GameScene") return;
+        if (arena.transform.Find("玩家")) { M6SceneSetup.Install(); return; }
         var serialized = new SerializedObject(arena);
         Transform systems = Child(arena.transform, "系统");
         Child(systems, "对局流程");
@@ -31,7 +32,8 @@ public static class ArenaSceneLayout
         visual.name = "本体";
         var playerAppearance = Child(player, "外观");
         visual.transform.SetParent(playerAppearance, false);
-        visual.GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/ArenaSprite.mat");
+        visual.GetComponent<Renderer>().sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Game/PlayerIdlePreview.mat");
+        visual.AddComponent<ArenaPlayerAnimation>();
         Child(player, "特效挂点");
         Set(serialized, "scenePlayer", body);
         Set(serialized, "movement", Child(player, "功能").gameObject.AddComponent<ArenaMovementTuning>());

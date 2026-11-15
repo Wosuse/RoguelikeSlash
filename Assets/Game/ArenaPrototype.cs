@@ -15,12 +15,18 @@ public sealed partial class ArenaPrototype : MonoBehaviour
 
     void Awake()
     {
+        ResetRunSystems();
         if (hud) hud.retry.onClick.AddListener(Retry);
         view = Camera.main;
         if (scenePlayer)
         {
             body = scenePlayer;
-            Paint(body.GetComponentInChildren<Renderer>().gameObject, playerLook, new Color(0.27f, 0.92f, 0.73f));
+            var sceneVisual = body.GetComponentInChildren<Renderer>();
+            if (sceneVisual)
+            {
+                Paint(sceneVisual.gameObject, playerLook, new Color(0.27f, 0.92f, 0.73f));
+                ConnectPlayerAnimation(sceneVisual);
+            }
             return;
         }
         var player = new GameObject("Player");
@@ -34,7 +40,16 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         body.interpolation = RigidbodyInterpolation2D.Interpolate;
         body.freezeRotation = true;
         player.AddComponent<BoxCollider2D>();
+        ConnectPlayerAnimation(visual.GetComponent<Renderer>());
 
+    }
+
+    void ConnectPlayerAnimation(Renderer visual)
+    {
+        if (!(visual is MeshRenderer)) return;
+        var animation = visual.GetComponent<ArenaPlayerAnimation>();
+        if (!animation) animation = visual.gameObject.AddComponent<ArenaPlayerAnimation>();
+        animation.Initialize(body, playerLook.tint);
     }
 
     void Paint(GameObject tile, Look look, Color color)
@@ -47,7 +62,8 @@ public sealed partial class ArenaPrototype : MonoBehaviour
     void Update()
     {
         if (hud) hud.Layout();
-        if (hp == 0) return;
+        if (hp == 0 || runClock && runClock.Paused) { ClearInput(); if (body) body.velocity = Vector2.zero; return; }
+        if (runStats) { runStats.Tick(Time.deltaTime * ClockRate); hp = Mathf.CeilToInt(runStats.HP); }
         elapsed += Time.deltaTime * ClockRate;
         ReadTouch();
         float x = (Input.GetKey(KeyCode.D) ? 1 : 0) - (Input.GetKey(KeyCode.A) ? 1 : 0);
@@ -86,11 +102,11 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         if (!focused)
         {
             ClearInput();
-            InterruptSkill();
+            if (!(runClock && runClock.Paused)) InterruptSkill();
         }
     }
 
-    void FixedUpdate() => body.velocity = Dashing ? aim * (dashDistance / dashDuration) : move * (moveSpeed * SkillMoveScale * (BulletTime ? bulletTimePlayerSpeed : 1f));
+    void FixedUpdate() => body.velocity = hp <= 0 || runClock && runClock.Paused ? Vector2.zero : Dashing ? aim * ((Dodging ? DodgeDistance : dashDistance) / dashDuration) : move * ((runStats ? runStats.Value(RunStat.MoveSpeed) : moveSpeed) * SkillMoveScale * (BulletTime ? bulletTimePlayerSpeed : 1f));
 
     void LateUpdate()
     {
@@ -107,6 +123,7 @@ public sealed partial class ArenaPrototype : MonoBehaviour
         body.position = Vector2.zero;
         body.velocity = Vector2.zero;
         hp = 100;
+        ResetRunSystems();
         elapsed = nextHit = 0;
         ResetCombat();
         InterruptSkill();

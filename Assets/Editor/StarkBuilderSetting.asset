@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   tag: 0
   wasmResourceUrl: 
-  OutputDir: C:\Users\82347\miniprograms\RoguelikeSlash\Builds\DouyinM3UI
+  OutputDir: C:\Users\82347\miniprograms\RoguelikeSlash\Builds\DouyinM5
   useByteAudioAPI: 0
   wasmMemorySize: 128
   isWebGL2: 0

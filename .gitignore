@@ -4,6 +4,7 @@
 /Builds/
 /Logs/
 /UserSettings/
+/M6-validation.txt
 *.csproj
 *.sln
 

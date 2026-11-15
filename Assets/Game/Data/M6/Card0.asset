@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 333684bfeb1a7cd4181413968ccb8ea0, type: 3}
+  m_Name: Card0
+  m_EditorClassIdentifier: 
+  kind: 0
+  weapon: 0
+  title: "\u8FFD\u52A0\u5F39\u4E38"
+  description: "\u6BCF\u65B9\u5411\u5F39\u4E38 +1\uFF0C\u6700\u591A 3 \u53D1\n\u540E\u7EED\u5F39\u4E38\u4F24\u5BB3
+    80% / 60%"
+  icon: {fileID: 0}
+  sound: {fileID: 0}

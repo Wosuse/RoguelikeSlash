@@ -69,6 +69,7 @@ public sealed partial class ArenaPrototype
     int aimedDamage => slashTuning ? slashTuning.aimedDamage : 45;
     float slashHoldLimit => slashTuning ? slashTuning.slashHoldLimit : 3f;
     float slashSweepWidth => slashTuning ? slashTuning.slashSweepWidth : 0.24f;
+    float DodgeDistance => guardSlashTuning ? guardSlashTuning.dodgeDistance : 1f;
     float counterTime => guardSlashTuning ? guardSlashTuning.counterTime : 3f;
     float guardTime => guardSlashTuning ? guardSlashTuning.guardTime : 5f;
     float perfectDodgeEnemySpeed => guardSlashTuning ? guardSlashTuning.perfectDodgeEnemySpeed : 0.1f;

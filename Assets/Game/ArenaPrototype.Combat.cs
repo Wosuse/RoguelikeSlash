@@ -4,6 +4,7 @@ using UnityEngine;
 public sealed partial class ArenaPrototype
 {
     enum EnemyKind { Chaser, Charger, Shooter }
+    [SerializeField, InspectorName("追击敌人动画")] EnemyAnimationProfile chaserAnimation;
 
     sealed class Actor
     {
@@ -12,8 +13,10 @@ public sealed partial class ArenaPrototype
         public EnemyKind Kind;
         public Vector2 Position, Direction;
         public float Timer, Rush, Aim;
-        public int Health, SpawnId;
+        public float Health; public int SpawnId, RewardTier;
         public bool Hostile;
+        public SpriteRenderer Animation;
+        public float MoveAnimationTime, ReleaseRemaining;
     }
 
     readonly List<Actor> enemies = new List<Actor>(100);
@@ -113,7 +116,7 @@ public sealed partial class ArenaPrototype
             if (closest != null && !closest.Object.activeSelf) closest = null;
         }
 
-        if (closest != null && elapsed >= nextShot &&
+        if (!autoWeapons && CanAutoAttack && closest != null && elapsed >= nextShot &&
             Fire(body.position, (closest.Position - body.position).normalized, false))
             nextShot = elapsed + autoShotInterval;
 
@@ -173,14 +176,37 @@ public sealed partial class ArenaPrototype
         actor.Kind = kind;
         actor.SpawnId = ++spawnSequence;
         ApplyLook(actor.Material, kind == EnemyKind.Charger ? chargerLook : kind == EnemyKind.Shooter ? shooterLook : chaserLook, color);
+        ConfigureEnemyAnimation(actor);
         actor.Health = kind == EnemyKind.Charger ? 80 : kind == EnemyKind.Shooter ? 40 : 30;
-        actor.Object.name = kind.ToString();
+        actor.RewardTier = enemyRewards ? enemyRewards.RollTier() : 0;
+        if (enemyRewards) actor.Health *= enemyRewards.tiers[actor.RewardTier].healthMultiplier;
+        actor.Object.name = kind.ToString() + (enemyRewards ? "·" + enemyRewards.tiers[actor.RewardTier].name : "");
         enemies.Add(actor);
+    }
+
+    void ConfigureEnemyAnimation(Actor enemy)
+    {
+        bool animated = enemy.Kind == EnemyKind.Chaser && chaserAnimation && chaserAnimation.idle;
+        if (animated && !enemy.Animation)
+        {
+            enemy.Animation = new GameObject("山贼动画").AddComponent<SpriteRenderer>();
+            enemy.Animation.transform.SetParent(enemy.Object.transform, false);
+            enemy.Animation.transform.localPosition = new Vector3(0, .12f, -.08f);
+        }
+        enemy.Object.GetComponent<MeshRenderer>().enabled = !animated;
+        if (!enemy.Animation) return;
+        enemy.Animation.enabled = animated;
+        if (!animated) return;
+        enemy.Animation.sprite = chaserAnimation.idle;
+        enemy.Animation.flipX = false;
+        enemy.Animation.transform.localScale = Vector3.one * chaserAnimation.scale;
+        enemy.MoveAnimationTime = enemy.ReleaseRemaining = 0;
     }
 
     void TickEnemy(Actor enemy, Vector2 toward, float distance, float dt)
     {
         enemy.Timer = Mathf.Max(0, enemy.Timer - dt);
+        enemy.ReleaseRemaining = Mathf.Max(0, enemy.ReleaseRemaining - dt);
         Vector2 velocity = Vector2.zero;
         if (enemy.Rush > 0)
         {
@@ -197,6 +223,7 @@ public sealed partial class ArenaPrototype
                 if (enemy.Kind == EnemyKind.Chaser)
                 {
                     if (distance <= meleeAttackRange) DamagePlayer(9);
+                    if (enemy.Animation && enemy.Animation.enabled) enemy.ReleaseRemaining = chaserAnimation.releaseSeconds;
                     enemy.Timer = 0.8f;
                     ApplyLook(enemy.Material, chaserLook, ChaserColor);
                 }
@@ -222,6 +249,7 @@ public sealed partial class ArenaPrototype
             if (distance <= meleeAttackRange && enemy.Timer <= 0)
             {
                 enemy.Aim = meleeWarningTime;
+                enemy.Direction = toward;
                 velocity = Vector2.zero;
             }
         }
@@ -245,6 +273,25 @@ public sealed partial class ArenaPrototype
 
         enemy.Position += velocity * dt;
         enemy.Object.transform.position = enemy.Position;
+        if (enemy.Animation && enemy.Animation.enabled)
+        {
+            float facingX = enemy.Aim > 0 || enemy.ReleaseRemaining > 0 ? enemy.Direction.x : velocity.x;
+            if (Mathf.Abs(facingX) > .01f) enemy.Animation.flipX = facingX < 0;
+            if (enemy.Aim > 0)
+                enemy.Animation.sprite = chaserAnimation.AttackFrame(1 - enemy.Aim / meleeWarningTime, false);
+            else if (enemy.ReleaseRemaining > 0)
+                enemy.Animation.sprite = chaserAnimation.AttackFrame(1 - enemy.ReleaseRemaining / chaserAnimation.releaseSeconds, true);
+            else if (velocity.sqrMagnitude > .001f)
+            {
+                enemy.MoveAnimationTime += dt;
+                enemy.Animation.sprite = chaserAnimation.MoveFrame(enemy.MoveAnimationTime);
+            }
+            else
+            {
+                enemy.MoveAnimationTime = 0;
+                enemy.Animation.sprite = chaserAnimation.idle;
+            }
+        }
     }
 
     bool Fire(Vector2 position, Vector2 direction, bool hostile)
@@ -279,17 +326,23 @@ public sealed partial class ArenaPrototype
             return;
         }
         if (shot.Hostile) DetectDodgedAttack(shot.Position, step, 0.55f, dt);
+        float parryRadius = BaseGuardPressed ? Mathf.Max(.55f, guardRadius) : .55f;
+        if (shot.Hostile && Parrying && SegmentHit(shot.Position, step, body.position, parryRadius, out float contact))
+        {
+            if (BaseGuardPressed) tapGuardUsed = true;
+            PlaySound(parrySound);
+            shot.Position += step * contact;
+            shot.Direction = -shot.Direction;
+            shot.Hostile = false;
+            shot.Timer = 4;
+            shot.Object.name = "Reflected projectile";
+            if (playerShots) shot.Object.transform.SetParent(playerShots);
+            ApplyLook(shot.Material, playerBulletLook, new Color(.48f, 1f, .88f));
+            shot.Object.transform.position = new Vector3(shot.Position.x, shot.Position.y, -.1f);
+            return;
+        }
         if (shot.Hostile && SegmentHit(shot.Position, step, body.position, 0.55f, out _))
         {
-            if (Parrying)
-            {
-                if (BaseGuardPressed) tapGuardUsed = true;
-                PlaySound(parrySound);
-                var reflectedDirection = -shot.Direction;
-                Return(bullets, index, bulletPool);
-                Fire(body.position, reflectedDirection, false);
-                return;
-            }
             DamagePlayer(10);
             Return(bullets, index, bulletPool);
             return;
@@ -308,7 +361,7 @@ public sealed partial class ArenaPrototype
             }
             if (hit >= 0)
             {
-                HitEnemy(hit, 20, shot.Direction);
+                ApplyEnemyHit(hit, 20, shot.Direction, DamageSource.Reflected);
                 Return(bullets, index, bulletPool);
                 return;
             }
@@ -332,19 +385,7 @@ public sealed partial class ArenaPrototype
         return time >= 0 && time <= 1;
     }
 
-    void HitEnemy(int index, int damage, Vector2 knockback)
-    {
-        var enemy = enemies[index];
-        enemy.Health -= damage;
-        if (enemy.Health <= 0)
-        {
-            kills++;
-            Return(enemies, index, enemyPool);
-            return;
-        }
-        enemy.Position += knockback * 0.15f;
-        enemy.Object.transform.position = enemy.Position;
-    }
+    void HitEnemy(int index, int damage, Vector2 knockback) => ApplyEnemyHit(index, damage, knockback, DamageSource.Skill);
 
     void DamagePlayer(int damage)
     {
@@ -380,7 +421,8 @@ public sealed partial class ArenaPrototype
             damage = Mathf.CeilToInt(damage * guardDamageMultiplier);
         }
         PlaySound(hurtSound);
-        hp = Mathf.Max(0, hp - damage);
+        if (runStats) { runStats.Receive(damage); hp = Mathf.CeilToInt(runStats.HP); }
+        else hp = Mathf.Max(0, hp - damage);
         nextHit = elapsed + 0.3f;
         if (hp == 0)
         {

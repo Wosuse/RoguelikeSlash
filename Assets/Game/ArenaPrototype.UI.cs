@@ -18,7 +18,8 @@ public sealed partial class ArenaPrototype
         if (!hud) return;
         int seconds = Mathf.FloorToInt(elapsed);
         string time = $"{seconds / 60:00}:{seconds % 60:00}";
-        hud.SetScore(hp, time, kills);
+        hud.SetScore(time, kills);
+        hud.SetHealth(runStats ? runStats.HP : hp, runStats ? runStats.Value(RunStat.MaxHP) : 100);
         hud.SetJoystick(hp > 0, finger >= 0, touchOrigin, stick);
         hud.SetResults(hp <= 0, time, kills);
         hud.retry.interactable = hp <= 0;
