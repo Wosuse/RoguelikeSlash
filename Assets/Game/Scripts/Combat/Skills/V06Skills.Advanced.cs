@@ -1,0 +1,28 @@
+using UnityEngine;
+public sealed partial class V06Skills
+{
+ [Header("离别赠礼残影")]
+ public Color afterimageTint=new Color(.25f,.25f,.3f,.8f);
+ [Min(0)]public float afterimageAttractRadius=8;
+ [Header("v0.9 蓄势与附加技能：试玩参数")]
+ public float fireCooldown=20;
+ public float waterCooldown=20;
+ public float afterimageCooldown=20;
+ public float waterRange=8;
+ public float waterRadius=2;
+ public float fireRadius=1;
+ public float fireDistance=2;
+ [SerializeField] bool charging;[SerializeField] float chargeTime,fireTimer,waterTimer,imageTimer;
+ int waterCharges=1;
+ readonly System.Collections.Generic.List<DelayedBlast> blasts=new System.Collections.Generic.List<DelayedBlast>();
+ sealed class DelayedBlast{public Vector2 position;public float timer,radius,damage;public bool image,water;public int targetId;public Vector2 from;public float fullTime;public LineRenderer line;}
+ void ResetAdvanced(){if(arena)arena.ClearAfterimages();charging=false;chargeTime=fireTimer=waterTimer=imageTimer=0;waterCharges=1;foreach(var b in blasts)if(b.line)Destroy(b.line.gameObject);blasts.Clear();}
+ void TickAdvanced(float dt){float worldDt=dt*Rate;if(charging){chargeTime+=dt;var chargeConfig=arena.v06Attack.Config(V06CardKind.蓄势);var chargeTimes=arena.v06Attack.Level(V06CardKind.蓄势)>1?chargeConfig.chargeUpgradeTimes:chargeConfig.chargeBaseTimes;if(chargeTime>=chargeTimes[2]){chargeTime=chargeTimes[2];FinishCharge();pressed=-1;held=false;}}fireTimer=Mathf.Max(0,fireTimer-worldDt);imageTimer=Mathf.Max(0,imageTimer-worldDt);int capacity=arena.v06Attack.Level(V06CardKind.珠帘)>1?3:1;Recover(ref waterCharges,ref waterTimer,capacity,Configured(V06CardKind.珠帘,0,waterCooldown),worldDt);
+ for(int i=blasts.Count-1;i>=0;i--){var b=blasts[i];b.timer-=worldDt;bool struck=false;if(b.image)struck=arena.V09AttackAt(b.position);if(b.water){float progress=1-Mathf.Clamp01(b.timer/b.fullTime);Vector2 point=Vector2.Lerp(b.from,b.position,progress);b.line.SetPosition(0,point);b.line.SetPosition(1,point-(b.position-b.from).normalized*.4f);if(b.timer>0)continue;arena.v06Attack.elements.ApplyWet(b.position,b.radius);arena.V09FinalHit(b.targetId,b.damage,DamageSource.Skill);Destroy(b.line.gameObject);blasts.RemoveAt(i);continue;}if(b.timer>0&&!struck)continue;arena.ReadTargets(swordTargets);foreach(var t in swordTargets)if(Vector2.Distance(t.position,b.position)<=b.radius)arena.V09FinalHit(t.id,b.damage,DamageSource.Skill);if(b.line)Destroy(b.line.gameObject);blasts.RemoveAt(i);}}
+ void FinishCharge(){if(!charging)return;charging=false;bool upgraded=arena.v06Attack.Level(V06CardKind.蓄势)>1;var config=arena.v06Attack.Config(V06CardKind.蓄势);float[] times=upgraded?config.chargeUpgradeTimes:config.chargeBaseTimes;float damage=chargeTime>=times[2]?config.chargeDamage[2]:chargeTime>=times[1]?config.chargeDamage[1]:chargeTime>=times[0]?config.chargeDamage[0]:ringDamage;Slash(true,damage);Cooldown(1,ringCD);}
+ void TriggerSkillExtras(bool ring,Vector2 direction){if(Has(V06CardKind.炽刃)&&fireTimer<=0){fireTimer=Configured(V06CardKind.炽刃,0,fireCooldown);float factor=1+(arena.v06Attack.elements.fireBaseBonus+Card(V06CardKind.炎))/100;Blast(arena.PlayerPosition+direction*fireDistance,Configured(V06CardKind.炽刃,2,fireRadius),Card(V06CardKind.炽刃)*factor,0,false);if(arena.v06Attack.Level(V06CardKind.炽刃)>1){int count=ring?8:3;for(int i=0;i<count;i++){float angle=ring?i*360f/count:(i-1)*35;Vector2 dir=Quaternion.Euler(0,0,angle)*direction;Blast(arena.PlayerPosition+dir*fireDistance,fireRadius,150*factor,.1f,false);}}}
+ if(Has(V06CardKind.珠帘)&&waterCharges>0){waterCharges--;arena.ReadTargets(swordTargets);float nearest=waterRange;int id=-1;Vector2 pos=arena.PlayerPosition+direction*waterRange;foreach(var t in swordTargets){float d=Vector2.Distance(t.position,arena.PlayerPosition);if(d<nearest){nearest=d;pos=t.position;id=t.id;}}if(id>=0){WaterShot(id,pos);}}}
+ void WaterShot(int id,Vector2 position){var obj=new GameObject("珠帘水箭");obj.transform.SetParent(transform);var line=obj.AddComponent<LineRenderer>();line.material=new Material(Shader.Find("Sprites/Default"));line.startColor=line.endColor=new Color(.2f,.7f,1);line.widthMultiplier=.15f;line.positionCount=2;line.SetPosition(0,arena.PlayerPosition);line.SetPosition(1,arena.PlayerPosition);float duration=Mathf.Max(.05f,Vector2.Distance(position,arena.PlayerPosition)/Mathf.Max(.1f,swordSpeed));blasts.Add(new DelayedBlast{water=true,targetId=id,position=position,from=arena.PlayerPosition,fullTime=duration,timer=duration,radius=waterRadius,damage=Card(V06CardKind.珠帘)*stats.Value(RunStat.Attack)/100,line=line});}
+ void TryAfterimage(){if(!Has(V06CardKind.离别赠礼)||imageTimer>0)return;imageTimer=Configured(V06CardKind.离别赠礼,0,afterimageCooldown);var obj=new GameObject("离别赠礼残影");obj.transform.SetParent(transform,false);obj.transform.position=arena.PlayerPosition;obj.AddComponent<AfterimageDecoy>().Initialize(arena,Configured(V06CardKind.离别赠礼,1,3),Configured(V06CardKind.离别赠礼,2,3),Card(V06CardKind.离别赠礼)*stats.Value(RunStat.Attack)/100,afterimageAttractRadius,afterimageTint);}
+ void Blast(Vector2 position,float radius,float damage,float delay,bool image){var obj=new GameObject(image?"离别残影":"炽刃火柱");obj.transform.SetParent(transform);var line=obj.AddComponent<LineRenderer>();line.material=new Material(Shader.Find("Sprites/Default"));line.startColor=line.endColor=image?new Color(.4f,.8f,1):new Color(1,.3f,.1f);line.widthMultiplier=.15f;line.positionCount=32;for(int i=0;i<32;i++){float a=i*Mathf.PI*2/31;line.SetPosition(i,position+new Vector2(Mathf.Cos(a),Mathf.Sin(a))*radius);}blasts.Add(new DelayedBlast{position=position,radius=radius,damage=damage*stats.Value(RunStat.Attack)/100,timer=delay,image=image,line=line});}
+}

@@ -1,0 +1,24 @@
+using UnityEngine;
+public sealed partial class CardLab
+{
+ public bool panelCollapsed;
+ public void TogglePanel(){panelCollapsed=!panelCollapsed;if(panelCollapsed)placement=PlacementMode.关闭;}
+ int panelTab;
+ GUIStyle labLabel,labButton,labToggle,labText,labHeading;
+ void EnsureStyles(){if(labLabel!=null)return;labLabel=new GUIStyle(GUI.skin.label){font=font,fontSize=18,fixedHeight=32,alignment=TextAnchor.MiddleLeft,wordWrap=false,clipping=TextClipping.Clip,padding=new RectOffset(6,6,2,2)};labLabel.normal.textColor=Color.white;
+ labHeading=new GUIStyle(labLabel){fontSize=20,fixedHeight=34};labButton=new GUIStyle(GUI.skin.button){font=font,fontSize=17,fixedHeight=32,padding=new RectOffset(6,6,2,2)};labToggle=new GUIStyle(GUI.skin.toggle){font=font,fontSize=17,fixedHeight=32,alignment=TextAnchor.MiddleLeft,padding=new RectOffset(22,2,3,3)};labText=new GUIStyle(GUI.skin.textField){font=font,fontSize=18,fixedHeight=32};}
+ bool Action(string text)=>GUILayout.Button(text,labButton);
+ void OnGUI(){if(!showPanel||!Application.isPlaying)return;EnsureStyles();var matrix=GUI.matrix;GUI.matrix=Matrix4x4.Scale(Vector3.one*PanelScale);var panel=PanelRect(PanelScale);if(panelCollapsed){if(GUI.Button(panel,"展开调试栏",labButton))TogglePanel();GUI.matrix=matrix;return;}var color=GUI.color;GUI.color=new Color(.035f,.055f,.08f,.97f);GUI.DrawTexture(panel,Texture2D.whiteTexture);GUI.color=color;
+ GUILayout.BeginArea(new Rect(panel.x+8,panel.y+6,panel.width-16,panel.height-12));GUILayout.BeginHorizontal();GUILayout.Label("卡牌实验室",labHeading,GUILayout.ExpandWidth(true));if(GUILayout.Button("收起",labButton,GUILayout.Width(64)))TogglePanel();GUILayout.EndHorizontal();panelTab=GUILayout.Toolbar(panelTab,new[]{"环境","组合","卡牌"},labButton);GUILayout.Space(6);scroll=GUILayout.BeginScrollView(scroll,false,true);
+ if(panelTab==0){autoSpawnEnemies=GUILayout.Toggle(autoSpawnEnemies,"自动生怪",labToggle);arena.labAutoSpawn=autoSpawnEnemies;freezeEnemies=GUILayout.Toggle(freezeEnemies,"冻结敌人",labToggle);invincible=GUILayout.Toggle(invincible,"玩家免伤",labToggle);autoAttack=GUILayout.Toggle(autoAttack,"普通攻击",labToggle);arena.v06Attack.suspendFiring=!autoAttack;showAttackRange=GUILayout.Toggle(showAttackRange,"射程圈",labToggle);GUILayout.Label("射程："+arena.v06Attack.range.ToString("0.#")+"  实际："+arena.v06Attack.EffectiveRange.ToString("0.#"),labLabel);GUILayout.BeginHorizontal();if(GUILayout.Button("−1",labButton,GUILayout.Width(48)))SetAttackRange(arena.v06Attack.range-1);float adjustedRange=GUILayout.HorizontalSlider(arena.v06Attack.range,minAttackRange,Mathf.Max(minAttackRange,maxAttackRange),GUILayout.Height(26));if(!Mathf.Approximately(adjustedRange,arena.v06Attack.range))SetAttackRange(Mathf.Round(adjustedRange*10)/10);if(GUILayout.Button("+1",labButton,GUILayout.Width(48)))SetAttackRange(arena.v06Attack.range+1);GUILayout.EndHorizontal();
+#if UNITY_EDITOR
+ if(Action("保存当前配置"))SaveCurrentConfiguration();if(!string.IsNullOrEmpty(configurationSaveMessage))GUILayout.Label(configurationSaveMessage,new GUIStyle(labLabel){fontSize=15,wordWrap=true,fixedHeight=0});
+#endif
+ if(showAttackRange&&Action("适配视野"))FitRangeInView();
+ if(Action("放置单桩"))AddTarget();GUILayout.BeginHorizontal();if(Action("生成一排"))SpawnTargets();if(Action("清除木桩"))ClearTargets();GUILayout.EndHorizontal();placement=(PlacementMode)GUILayout.Toolbar((int)placement,new[]{"关闭摆放","点击放桩","点击移除"},labButton);
+ GUILayout.BeginHorizontal();if(Action("扣半血"))HalfHealth();if(Action("回血"))Heal();if(Action("满无双"))Charge();GUILayout.EndHorizontal();if(Action("重置实验"))ResetLab();}
+ else if(panelTab==1){GUILayout.Label("选择组合（替换已装卡牌）",labLabel);foreach(var preset in presets)if(preset&&Action(preset.name)){selectedLoadout=preset;ApplyLoadout();}if(selectedLoadout&&Action("重新应用"))ApplyLoadout();if(!string.IsNullOrEmpty(loadoutResult))foreach(var line in loadoutResult.Split('\n'))GUILayout.Label(line,labLabel);}
+ else {GUILayout.Label("搜索卡牌",labLabel);search=GUILayout.TextField(search,labText);cardGroup=(CardGroup)GUILayout.SelectionGrid((int)cardGroup,new[]{"全部","普攻","斩与剑气","闪与机动","元素","生存"},3,labButton);foreach(var card in arena.v06Attack.cards){if(!card||cardGroup!=CardGroup.全部&&GroupFor(card.kind)!=cardGroup)continue;if(!string.IsNullOrEmpty(search)&&!card.name.Contains(search))continue;DrawCardEntry(card);}}
+ GUILayout.EndScrollView();GUILayout.Space(4);var statusStyle=new GUIStyle(labLabel){wordWrap=true,fixedHeight=60,fontSize=16};GUILayout.Label(arena.v06Attack.DebugAttackStatus(),statusStyle);GUILayout.EndArea();
+ var bench=FindObjectOfType<AnimationWorkbench>();if(bench&&Camera.main){var point=Camera.main.WorldToScreenPoint(bench.transform.position+Vector3.up*1.2f);var rect=new Rect(point.x/PanelScale-100,(Screen.height-point.y)/PanelScale-32,220,32);if(!panel.Overlaps(rect))GUI.Label(rect,"动画预览",labLabel);}GUI.matrix=matrix;}
+}

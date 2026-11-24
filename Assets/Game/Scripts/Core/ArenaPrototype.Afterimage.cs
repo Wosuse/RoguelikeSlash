@@ -1,0 +1,14 @@
+using System.Collections.Generic;
+using UnityEngine;
+public sealed partial class ArenaPrototype
+{
+ readonly List<AfterimageDecoy> afterimages=new List<AfterimageDecoy>();
+ public void RegisterAfterimage(AfterimageDecoy image){if(!afterimages.Contains(image))afterimages.Add(image);}
+ public void UnregisterAfterimage(AfterimageDecoy image){afterimages.Remove(image);}
+ public void ClearAfterimages(){foreach(var image in GetComponentsInChildren<AfterimageDecoy>(true))if(image){image.gameObject.SetActive(false);Destroy(image.gameObject);}afterimages.Clear();}
+ AfterimageDecoy AttractingAfterimage(Vector2 position){AfterimageDecoy chosen=null;float nearest=float.PositiveInfinity;foreach(var image in afterimages){if(!image||!image.IsTargetable)continue;float distance=Vector2.Distance(image.transform.position,position);if(distance<=image.attractRadius&&distance<nearest){chosen=image;nearest=distance;}}return chosen;}
+ void DamageEnemyTarget(Actor enemy,int damage){if(enemy.AttackDecoy){enemy.AttackDecoy.ReceiveAttack();return;}DamagePlayer(damage);}
+ bool InterceptAfterimage(Vector2 start,Vector2 step){AfterimageDecoy chosen=null;float first=2;float playerTime;if(SegmentHit(start,step,body.position,.55f,out playerTime))first=playerTime;foreach(var image in afterimages){if(!image||!image.IsTargetable)continue;float time;if(SegmentHit(start,step,image.transform.position,.55f,out time)&&time<=first){first=time;chosen=image;}}if(!chosen)return false;chosen.ReceiveAttack();return true;}
+ public void CreateAfterimageVisual(Transform parent,Color tint,List<Material> owned){var source=body?body.GetComponentInChildren<MeshRenderer>():null;if(source){var visual=new GameObject("暗色玩家残影",typeof(MeshFilter),typeof(MeshRenderer));visual.transform.SetParent(parent,false);visual.transform.position=source.transform.position;visual.transform.rotation=source.transform.rotation;visual.transform.localScale=source.transform.lossyScale;visual.GetComponent<MeshFilter>().sharedMesh=source.GetComponent<MeshFilter>().sharedMesh;var material=new Material(source.sharedMaterial);material.color=source.sharedMaterial.color*tint;owned.Add(material);visual.GetComponent<MeshRenderer>().sharedMaterial=material;visual.GetComponent<MeshRenderer>().sortingOrder=source.sortingOrder;visual.GetComponent<MeshRenderer>().sortingLayerID=source.sortingLayerID;return;}
+ var sprite=body?body.GetComponentInChildren<SpriteRenderer>():null;if(sprite){var visual=new GameObject("暗色玩家残影").AddComponent<SpriteRenderer>();visual.transform.SetParent(parent,false);visual.transform.position=sprite.transform.position;visual.transform.rotation=sprite.transform.rotation;visual.transform.localScale=sprite.transform.lossyScale;visual.sprite=sprite.sprite;visual.sharedMaterial=sprite.sharedMaterial;visual.sortingOrder=sprite.sortingOrder;visual.sortingLayerID=sprite.sortingLayerID;visual.flipX=sprite.flipX;visual.flipY=sprite.flipY;visual.color=sprite.color*tint;}}
+}

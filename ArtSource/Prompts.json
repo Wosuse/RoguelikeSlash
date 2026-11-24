@@ -1,0 +1,362 @@
+{
+  "idle": {
+    "prompt": {
+      "1": {
+        "class_type": "LoadImage",
+        "inputs": {
+          "image": "hero.png"
+        }
+      },
+      "2": {
+        "class_type": "VAELoader",
+        "inputs": {
+          "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+        }
+      },
+      "3": {
+        "class_type": "UNETLoader",
+        "inputs": {
+          "unet_name": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+          "weight_dtype": "default"
+        }
+      },
+      "4": {
+        "class_type": "CLIPLoader",
+        "inputs": {
+          "clip_name": "qwen3vl_32b_minimax_h3_ultra_uncensored_heretic_int8_convrot.safetensors",
+          "type": "minimax",
+          "device": "cpu"
+        }
+      },
+      "5": {
+        "class_type": "MiniMaxH3ImageToVideo",
+        "inputs": {
+          "clip": [
+            "4",
+            0
+          ],
+          "vae": [
+            "2",
+            0
+          ],
+          "first_frame": [
+            "1",
+            0
+          ],
+          "last_frame": [
+            "1",
+            0
+          ],
+          "prompt": "Locked camera, static plain warm gray background, preserve the exact flat 2D chibi wuxia sprite, framing, colors, hat and shadow with only mouth visible. Seamless idle breathing loop. Both boots remain fixed. Very gentle shoulder and chest rise and fall, tiny delayed movement at the cloak edge and hat ties, then return to initial pose. No blinking, no camera motion, no effects.",
+          "width": 512,
+          "height": 512,
+          "length": 56
+        }
+      },
+      "6": {
+        "class_type": "LoraLoaderModelOnly",
+        "inputs": {
+          "model": [
+            "3",
+            0
+          ],
+          "lora_name": "dmad_minimax_h3_4step_full_critic_comfyui.safetensors",
+          "strength_model": 1
+        }
+      },
+      "7": {
+        "class_type": "BasicGuider",
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "conditioning": [
+            "5",
+            0
+          ]
+        }
+      },
+      "8": {
+        "class_type": "RandomNoise",
+        "inputs": {
+          "noise_seed": 16329
+        }
+      },
+      "9": {
+        "class_type": "KSamplerSelect",
+        "inputs": {
+          "sampler_name": "res_multistep"
+        }
+      },
+      "10": {
+        "class_type": "BasicScheduler",
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "scheduler": "simple",
+          "steps": 4,
+          "denoise": 1
+        }
+      },
+      "11": {
+        "class_type": "SamplerCustomAdvanced",
+        "inputs": {
+          "noise": [
+            "8",
+            0
+          ],
+          "guider": [
+            "7",
+            0
+          ],
+          "sampler": [
+            "9",
+            0
+          ],
+          "sigmas": [
+            "10",
+            0
+          ],
+          "latent_image": [
+            "5",
+            1
+          ]
+        }
+      },
+      "12": {
+        "class_type": "VAEDecode",
+        "inputs": {
+          "samples": [
+            "11",
+            0
+          ],
+          "vae": [
+            "2",
+            0
+          ]
+        }
+      },
+      "13": {
+        "class_type": "SaveImage",
+        "inputs": {
+          "images": [
+            "12",
+            0
+          ],
+          "filename_prefix": "idle/idle"
+        }
+      }
+    }
+  },
+  "move": {
+    "prompt": {
+      "1": {
+        "class_type": "LoadImage",
+        "inputs": {
+          "image": "hero.png"
+        }
+      },
+      "2": {
+        "class_type": "VAELoader",
+        "inputs": {
+          "vae_name": "minimax_h3_video_vae_int8_convrot.safetensors"
+        }
+      },
+      "3": {
+        "class_type": "UNETLoader",
+        "inputs": {
+          "unet_name": "minimax_h3_hybrid_fl2va_ref2va_b25-49-int8.safetensors",
+          "weight_dtype": "default"
+        }
+      },
+      "4": {
+        "class_type": "CLIPLoader",
+        "inputs": {
+          "clip_name": "qwen3vl_32b_minimax_h3_ultra_uncensored_heretic_int8_convrot.safetensors",
+          "type": "minimax",
+          "device": "cpu"
+        }
+      },
+      "5": {
+        "class_type": "MiniMaxH3ImageToVideo",
+        "inputs": {
+          "clip": [
+            "4",
+            0
+          ],
+          "vae": [
+            "2",
+            0
+          ],
+          "first_frame": [
+            "1",
+            0
+          ],
+          "prompt": "Locked camera, plain warm gray background. A clean readable in-place right-facing 3/4 walk cycle of exactly this 2D chibi wuxia game sprite. The feet alternate clear contact, passing and lift poses. Mild arm swing, cloak and hat ties trail to the left. Keep character centered, same scale, same black outfit and wide hat with deep face shadow showing only mouth. No camera motion, no effects.",
+          "width": 512,
+          "height": 512,
+          "length": 56
+        }
+      },
+      "6": {
+        "class_type": "LoraLoaderModelOnly",
+        "inputs": {
+          "model": [
+            "3",
+            0
+          ],
+          "lora_name": "dmad_minimax_h3_4step_full_critic_comfyui.safetensors",
+          "strength_model": 1
+        }
+      },
+      "7": {
+        "class_type": "BasicGuider",
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "conditioning": [
+            "5",
+            0
+          ]
+        }
+      },
+      "8": {
+        "class_type": "RandomNoise",
+        "inputs": {
+          "noise_seed": 16329
+        }
+      },
+      "9": {
+        "class_type": "KSamplerSelect",
+        "inputs": {
+          "sampler_name": "res_multistep"
+        }
+      },
+      "10": {
+        "class_type": "BasicScheduler",
+        "inputs": {
+          "model": [
+            "6",
+            0
+          ],
+          "scheduler": "simple",
+          "steps": 4,
+          "denoise": 1
+        }
+      },
+      "11": {
+        "class_type": "SamplerCustomAdvanced",
+        "inputs": {
+          "noise": [
+            "8",
+            0
+          ],
+          "guider": [
+            "7",
+            0
+          ],
+          "sampler": [
+            "9",
+            0
+          ],
+          "sigmas": [
+            "10",
+            0
+          ],
+          "latent_image": [
+            "5",
+            1
+          ]
+        }
+      },
+      "12": {
+        "class_type": "VAEDecode",
+        "inputs": {
+          "samples": [
+            "11",
+            0
+          ],
+          "vae": [
+            "2",
+            0
+          ]
+        }
+      },
+      "13": {
+        "class_type": "SaveImage",
+        "inputs": {
+          "images": [
+            "12",
+            0
+          ],
+          "filename_prefix": "move/move"
+        }
+      }
+    }
+  },
+  "skills": {
+    "tool": "built-in image_gen",
+    "prompts": {
+      "dodge": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 8 frames in 4 columns 2 rows square cells. Facing RIGHT throughout, NON LOOP backward dodge: 1 stand 2 crouch 3 push off backwards 4 lean back with hand holding hat brim 5 tuck one knee other leg extends, cloak swings FORWARD to RIGHT 6 land 7 settle 8 upright. No character travel across cells, no turning or somersault.",
+      "run": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 8 frames 4 columns 2 rows square cells. Seamless right-facing in-place ninja sprint cycle. Torso leans strongly forward, head stable, arms stretched BACK, sword sheathed. Alternate legs clearly contact, compression, passing and lifted phases, followed by opposite leg cycle. Cloak streams LEFT. No sword swing or sliding.",
+      "slash": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 8 frames 4 columns 2 rows. Single forward diagonal sword slash NON LOOP facing RIGHT: 1 stance holding sword 2 low brace draw back 3 torso windup 4 fast powerful sword swing forward to RIGHT downward diagonal 5 blade follows through low forward 6 stop momentum 7 recover 8 neutral. Feet small support adjustments no lunge travel. Only physical straight sword, NO white arcs or glows.",
+      "charge": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 4 frames in 2 columns 2 rows square cells. Enter sword draw charge stance NON LOOP: 1 neutral 2 knees bend 3 lean forward LEFT hand holding black waist scabbard RIGHT hand grasps hilt 4 deep stable stance, left hand at sheath, right hand at hilt, blade remains almost entirely in sheath, ready to explode. Right-facing every frame. Sword MUST stay sheathed, no glowing effects. Last pose is charge hold and spin entry anchor.",
+      "hold": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 4 frames in 2 columns 2 rows square cells. LOOP hold charge pose from reference, all 4 poses nearly identical to reference with only subtle breathing and hem/cape movement. Left hand steady on scabbard, right gripping sheathed sword hilt. No drawing or resheathing. First and last nearly match.",
+      "spin": "Use case stylized-concept. Production 2D side-view game animation sprite sheet. Reference is exact character identity: short 2.5 head chibi black-clad wuxia hero, broad dark bamboo hat hiding eyes, only small mouth visible, flowing black cloak, charcoal wrap outfit and chunky boots, clean angular cel shading. Add one consistent straight silver-gray jian with dark wrapped hilt and black scabbard at waist. Fixed camera scale, every full character and sword inside its cell, generous empty margins and transparent gutters, identical size throughout, feet ground midpoint at same position per cell. True alpha transparent background, no ground shadows, no text or borders, no motion lines, no ghosts, no energy effects. Read frames row major. EXACTLY 12 frames in 4 columns 3 rows equal square cells. Single full 360 degree spinning sword draw slash. Frame 1 EXACT reference charge pose, blade sheathed left hand holding sheath right at hilt. Frame 2 draw sword to right. 3 front-right sword extended. 4 front view, 5 front-left, 6 left side, 7 back-left, 8 full BACK VIEW face fully hidden cape prominent, 9 back-right, 10 right side, 11 stop spin 12 recover stable RIGHT-facing stance. MUST show whole body turning once, coordinated feet hips shoulders, straight sword extended outside body. Cloak spreads then settles. No energy, no sword arcs, just character physical sword. All poses fully contained.",
+      "crescent": "Use case stylized-concept. Independent 2D wuxia game VFX animation sheet, exactly THREE frames in one horizontal row, three equal SQUARE cells, broad transparent gutters and 12% margins in every cell. TRUE TRANSPARENT BACKGROUND, no character, weapon, text, labels, shadows, smoke, fire, runes, radial beams or background glow. Render a thin sharp silver WHITE crescent flying RIGHT. Convex continuous cutting outer edge on RIGHT, concave edge on LEFT with slight wisps. Long fine pointed tips top and bottom, cold silver-white layered thin blade, no thick glow. Each of 3 frames is same shape size orientation center, only subtle internal flow.",
+      "ring": "Use case stylized-concept. Independent 2D wuxia game VFX animation sheet, exactly THREE frames in one horizontal row, three equal SQUARE cells, broad transparent gutters and 12% margins in every cell. TRUE TRANSPARENT BACKGROUND, no character, weapon, text, labels, shadows, smoke, fire, runes, radial beams or background glow. Render a PERFECT CIRCULAR silver-white annular cutting blade viewed directly top-down, transparent hollow center, visible narrow blade band, bright sharp continuous outside cutting edge, inner edge fading lightly, 2 or 3 fine elongated circular cutting streaks. Each of 3 frames same ring diameter and center, only streaks shift around circumference. Not ellipse, shield, magic circle, line or halo."
+    }
+  },
+  "skill_inbetweens_2026_11_22": {
+    "tool": "built-in image_gen",
+    "outputs": "Assets/Game/Art/Animations/Player/{forward-dodge,dodge,slash,spin}",
+    "prompts": {
+      "forward-dodge": "Use case: stylized-concept, production 2D game animation IN-BETWEEN sprites. The input is a labeled contact sheet of FIVE existing keyframes (KEY 1..5), a reference only, NOT a background to retain. Draw EXACTLY FIVE NEW intermediate poses, not copies of those keys. Layout: 1536x1024 transparent PNG sprite sheet, 3 columns x 2 rows of 512x512 square cells. Row-major first five cells contain poses, sixth cell completely empty transparent. No labels, numbers, grid lines, backgrounds, shadows, glow, blur or afterimages. Preserve EXACT hero identity, angular cel-shaded drawing, dark bamboo hat hiding eyes, black costume, black cloak, gray sword and scabbard. One hero per cell, one consistent body and hat scale matching the reference; same camera. Ground midpoint at (256,472) in each cell, leave generous transparent margins, complete sword and cloak never cropped. Anchor ground, not bounding-box center. Hat width about 300px and standing character height about365px per 512px cell; crouch naturally changes posture without zooming the head. Exactly two arms, two legs. Each new pose must visibly continue actual skill motion with changing limb positions, weight transfer and cloak inertia. Output five distinct in-between frames only. ACTION forward dodge facing RIGHT, hand holds hat, torso leans forward, cape trails LEFT, sword remains sheathed. Five new poses: cell1 BETWEEN KEY1 and KEY2 initial leg push and increasing lean; cell2 BETWEEN KEY2 and KEY3 extended airborne/low sliding stride and maximum forward momentum; cell3 BETWEEN KEY3 and KEY4 leg swings under body while torso stays low; cell4 BETWEEN KEY4 and KEY5 landing/compression beginning to recover; cell5 AFTER KEY5 almost neutral with settling cape. Prioritize three middle dynamic travel poses. Keep same direction, no backward tilt, no roll.",
+      "dodge": "Use case: stylized-concept, production 2D game animation IN-BETWEEN sprites. The input is a labeled contact sheet of FIVE existing keyframes (KEY 1..5), a reference only, NOT a background to retain. Draw EXACTLY FIVE NEW intermediate poses, not copies of those keys. Layout: 1536x1024 transparent PNG sprite sheet, 3 columns x 2 rows of 512x512 square cells. Row-major first five cells contain poses, sixth cell completely empty transparent. No labels, numbers, grid lines, backgrounds, shadows, glow, blur or afterimages. Preserve EXACT hero identity, angular cel-shaded drawing, dark bamboo hat hiding eyes, black costume, black cloak, gray sword and scabbard. One hero per cell, one consistent body and hat scale matching the reference; same camera. Ground midpoint at (256,472) in each cell, leave generous transparent margins, complete sword and cloak never cropped. Anchor ground, not bounding-box center. Hat width about 300px and standing character height about365px per 512px cell; crouch naturally changes posture without zooming the head. Exactly two arms, two legs. Each new pose must visibly continue actual skill motion with changing limb positions, weight transfer and cloak inertia. Output five distinct in-between frames only. ACTION backward dodge: hero faces RIGHT throughout, moves conceptually to LEFT but stays anchored within each cell. Five new poses: cell1 BETWEEN KEY1 and KEY2 bend knees and raise hand toward hat; cell2 BETWEEN KEY2 and KEY3 one hand fixes hat, rearward body lean and leg pushing right; cell3 BETWEEN KEY3 and KEY4 rearward transit with one knee tucked, cloak sweeps FORWARD to RIGHT; cell4 BETWEEN KEY4 and KEY5 soft landing and rising knees, cape still swings right; cell5 AFTER KEY5 final settling toward neutral. Preserve facing RIGHT, never turn body to face left, no somersault.",
+      "slash": "Use case: stylized-concept, production 2D game animation IN-BETWEEN sprites. The input is a labeled contact sheet of FIVE existing keyframes (KEY 1..5), a reference only, NOT a background to retain. Draw EXACTLY FIVE NEW intermediate poses, not copies of those keys. Layout: 1536x1024 transparent PNG sprite sheet, 3 columns x 2 rows of 512x512 square cells. Row-major first five cells contain poses, sixth cell completely empty transparent. No labels, numbers, grid lines, backgrounds, shadows, glow, blur or afterimages. Preserve EXACT hero identity, angular cel-shaded drawing, dark bamboo hat hiding eyes, black costume, black cloak, gray sword and scabbard. One hero per cell, one consistent body and hat scale matching the reference; same camera. Ground midpoint at (256,472) in each cell, leave generous transparent margins, complete sword and cloak never cropped. Anchor ground, not bounding-box center. Hat width about 300px and standing character height about365px per 512px cell; crouch naturally changes posture without zooming the head. Exactly two arms, two legs. Each new pose must visibly continue actual skill motion with changing limb positions, weight transfer and cloak inertia. Output five distinct in-between frames only. ACTION single right-facing sword slash, one continuous swing with sword in right hand. Five new poses specified: cell1 BETWEEN KEY1 and KEY2 preparation moving sword over shoulder; cell2 BETWEEN KEY2 and KEY3 upper forward arc with rotating shoulder and sword pointing diagonally upper right; cell3 BETWEEN KEY3 and KEY4 middle of the actual DOWNWARD FORWARD cut, sword crossing diagonally in front of body; cell4 ALSO BETWEEN KEY3 and KEY4 slightly LATER, blade points forward-right at near-horizontal/slightly down angle, wrist and shoulder follow through; cell5 BETWEEN KEY4 and KEY5 quick low follow-through/recovery. Put THREE new poses along the actual sword-sweep arc, not three idle windups. Clear drawn silver blade in every pose, no sword-energy slash or trails. Keep consistent head scale even when blade points upward; NEVER fit whole sword bounds by shrinking hero.",
+      "spin": "Use case: stylized-concept, production 2D game animation IN-BETWEEN sprites. The input is a labeled contact sheet of FIVE existing keyframes (KEY 1..5), a reference only, NOT a background to retain. Draw EXACTLY FIVE NEW intermediate poses, not copies of those keys. Layout: 1536x1024 transparent PNG sprite sheet, 3 columns x 2 rows of 512x512 square cells. Row-major first five cells contain poses, sixth cell completely empty transparent. No labels, numbers, grid lines, backgrounds, shadows, glow, blur or afterimages. Preserve EXACT hero identity, angular cel-shaded drawing, dark bamboo hat hiding eyes, black costume, black cloak, gray sword and scabbard. One hero per cell, one consistent body and hat scale matching the reference; same camera. Ground midpoint at (256,472) in each cell, leave generous transparent margins, complete sword and cloak never cropped. Anchor ground, not bounding-box center. Hat width about 300px and standing character height about365px per 512px cell; crouch naturally changes posture without zooming the head. Exactly two arms, two legs. Each new pose must visibly continue actual skill motion with changing limb positions, weight transfer and cloak inertia. Output five distinct in-between frames only. ACTION one complete 360-degree rotating sword slash. Five NEW poses: cell1 BETWEEN KEY1 and KEY2 draw sword from scabbard with hips turning, blade extends from sheathed pose; cell2 BETWEEN KEY2 and KEY3 three-quarter turn toward left with sword sweeping low/front-left; cell3 BETWEEN KEY3 and KEY4 rear three-quarter view, back of hat and cloak visible and sword continuing around body; cell4 BETWEEN KEY4 and KEY5 opposite rear-to-front three-quarter turn with sword sweeping right; cell5 AFTER KEY5 return to a right-facing low ready stance and blade follow-through. Body, feet and waist rotate as a whole, not only the sword arm. Keep one consistent head/hat/body size across views and all cells. Exactly one spin, full sword remains inside cell. No energy rings, motion streaks or duplicate limbs."
+    },
+    "reference_keyframe_guids": {
+      "forward-dodge": [
+        "71ebf5979a7c4a67a896a8b5fe66663d",
+        "17a7157c1b1648f79991824c4affa24c",
+        "66fb6d9e58ce401d8ddc139997b4f969",
+        "ecc40dea73c34ca99fb05d50bb9da895",
+        "ccf225715a7e4a0089b0d5b5885238fc"
+      ],
+      "dodge": [
+        "2968a50412c622a45ac0ab29b4441f4b",
+        "86182fb6cc2a19a4bbd3d10592cfe63d",
+        "7cd99cdbaf87d454fbaed29b4a88bc94",
+        "86ebeb25f82080a4193a84f22f659e8c",
+        "d39a2eb99f52b5e48ad5afa2287b98ab"
+      ],
+      "slash": [
+        "8a6be097ece80934fbdb92a15edc2e9c",
+        "ed671fbcd1bb9aa48b9dd29fa12ece82",
+        "378882021ef8f5e478174d7af401d889",
+        "013155b69505ad446ae9b94889c2763b",
+        "b3a72ba39c8087c4f91a500ed7ff68c0"
+      ],
+      "spin": [
+        "6edbbd3d5d49e764c8de4182e096c47b",
+        "8b8c7bb8711baff409ee3f06a15504e1",
+        "58a294be3bd5d25428b45e28613db8de",
+        "bde09b2ef89980a408fdf86222fbb54e",
+        "0dbf273548cc1dd41aacb9dba34ba5e6"
+      ]
+    }
+  },
+  "back_dodge_smooth_cape_forward": {
+    "tool": "built-in image_gen",
+    "pose_prompt": "Use case: identity-preserve / production 2D sprite animation edit. Input image 1 is the GOOD forward-dodge animation, reference for exact hero identity, drawing, body scale, hat size, canvas margins and smooth pose progression. Input image 2 is the EXISTING backward dodge edit target: it jitters because alternating frames stand up then crouch. REPLACE its choreography with ONE coherent ten-frame backward dodge, do not interleave unrelated keyframes. Output a true-alpha transparent PNG sprite sheet EXACTLY 2560x1024, FIVE columns TWO rows, ten equal 512x512 cells, row-major order. No labels, numbering, grids, background, floor shadows, glow, speed streaks, ghosts, duplicates. Preserve black-clad chibi wuxia hero, broad dark bamboo hat hiding eyes, black cloak, one sheathed sword at waist, angular clean cel shading. Fixed camera and UNCHANGING head/hat/body proportions across all ten cells: no zoom, no shrinking or growing. Hat width about300px per cell, feet ground line exactly y472 within each512px cell, root/ground midpoint x256. Full character and cloak stay inside each cell. Hero always faces RIGHT while dodging BACK to LEFT conceptually, but DO NOT move the root across cell. One hand reaches hat and stays on hat through the transit; one knee bends/tucks, other leg pushes then lands. Cloak swings FORWARD toward RIGHT during back travel. All ten poses must be different, smooth, sequential, not a repeated idle loop. Sequence: 1 neutral ready, 2 slightly compress and reach toward hat, 3 start rear lean and brace hat, 4 deepen rear lean and push leg, 5 maximum rear travel with tucked knee, 6 CONTINUE nearly same low head level with small leg follow-through (no standing up), 7 low landing compression, 8 smoothly rise, 9 settle near neutral lowering hand, 10 neutral recovery. CRITICAL anti-jitter: the head descends smoothly during frames1-5, stays nearly LEVEL in5-7, rises smoothly in8-10; never alternate raised head/crouched head on neighboring frames. Relative head-top y trajectory approx110,120,136,146,151,152,148,136,120,110. Head x trajectory roughly256,254,248,242,238,238,242,248,253,256. Keep the HAT dimensions constant even when torso leans; do not normalize each full pose to same total bounding height. Use same face direction all frames, no spin, no forward lunge, no sword swing, no extra limbs. Maintain silhouette and clean alpha suitable for direct Unity sprite use.",
+    "final_cape_correction_prompt": "Use case: precise-object-edit, production 2D sprite animation. EDIT THE ATTACHED TEN-FRAME SHEET. Change ONLY THE CAPE / CLOAK cloth motion; keep hero, poses, face direction, hat, costume, sheathed sword, body proportions, feet anchors, smooth frame sequence, and 5-column 2-row arrangement. The hero faces RIGHT but dodges BACK toward LEFT. Therefore the cape MUST fly FORWARD toward SCREEN RIGHT, the direction the hero is LOOKING. In the input it flies toward screen LEFT; that is WRONG and must be removed/repainted. Do NOT mirror the character or the whole image. The corrected silhouette must have the large loose cape mass, fluttering tips and cloth folds extending to the RIGHT of the shoulder/torso in middle frames3-8. On the LEFT of the torso, remove the long streaming cape tail: only a short attached fold may remain. Draw the cape flowing from the shoulders around behind the torso and then billowing to the RIGHT, clearly visible on the RIGHT side beyond the raised hand and near the forward leg; do not obscure face/hat. Frames1-2 cloth stays close then starts pushing RIGHT; frames3-4 stronger RIGHT extension; frames5-7 strongest broad cape flutter to RIGHT; frames8-9 settle smoothly still angled RIGHT; frame10 cloth falls closer to body. Tiny rear ponytail may remain but the broad CAPE must point RIGHT. True alpha transparent background, no shadows, glow or labels. Preserve all ten cells and smooth single crouch-then-rise trajectory. Output clean 2560x1024 PNG, five equal512x512 cells per row, two rows. The output's middle-frame CAPE TIPS MUST visibly occupy screen RIGHT; do not copy any long leftward cape from the input. Keep full cape tips inside their own cell and keep the same fixed camera. Exactly one hero per frame, two arms/two legs, no ghosts.",
+    "output": "Assets/Game/Art/Animations/Player/dodge/dodge-01.png through dodge-10.png",
+    "note": "Configuration and metadata preserved. One shared scale and horizontal origin; equal foot baseline."
+  }
+}

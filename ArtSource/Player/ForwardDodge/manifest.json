@@ -1,0 +1,22 @@
+{
+  "name": "forward-dodge",
+  "frames": 5,
+  "size": [
+    512,
+    512
+  ],
+  "loop": false,
+  "frameDurationsMs": [
+    65,
+    65,
+    90,
+    70,
+    80
+  ],
+  "pivotNormalized": [
+    0.5,
+    0.078125
+  ],
+  "generationTool": "image_gen",
+  "promptSummary": "Reference hero; right-facing forward dodge, forward lean, hand holding hat, cape trails left; five poses: prepare, push, maximum lean, land, recover."
+}

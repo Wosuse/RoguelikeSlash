@@ -1,0 +1,176 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e96a2eb47ad1ad4699e6155c889af90, type: 3}
+  m_Name: DefaultSkillAnimations
+  m_EditorClassIdentifier: 
+  dodge:
+    frames:
+    - {fileID: 21300000, guid: 2968a50412c622a45ac0ab29b4441f4b, type: 3}
+    - {fileID: 21300000, guid: a960706e37ae4e1ba2b907fd9a8ee0aa, type: 3}
+    - {fileID: 21300000, guid: 86182fb6cc2a19a4bbd3d10592cfe63d, type: 3}
+    - {fileID: 21300000, guid: 84dba1828194427cb38c68629bfc32cd, type: 3}
+    - {fileID: 21300000, guid: 7cd99cdbaf87d454fbaed29b4a88bc94, type: 3}
+    - {fileID: 21300000, guid: d3a7896ba3344861ba6124bea50a832f, type: 3}
+    - {fileID: 21300000, guid: 86ebeb25f82080a4193a84f22f659e8c, type: 3}
+    - {fileID: 21300000, guid: ab201fac163d4897af53dc00c38ffb70, type: 3}
+    - {fileID: 21300000, guid: aa3e310d80394c2e963e19f6d5cab032, type: 3}
+    - {fileID: 21300000, guid: d39a2eb99f52b5e48ad5afa2287b98ab, type: 3}
+    frameSeconds: 0.025
+    playbackSpeed: 1
+    frameWeights:
+    - 0.5
+    - 0.6
+    - 0.9
+    - 1
+    - 1.2
+    - 1.2
+    - 1.1
+    - 0.9
+    - 0.4
+    - 0.2
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  forwardDodge:
+    frames:
+    - {fileID: 21300000, guid: 71ebf5979a7c4a67a896a8b5fe66663d, type: 3}
+    - {fileID: 21300000, guid: ce830a0afc7e461f86c1dece78e44dcb, type: 3}
+    - {fileID: 21300000, guid: 17a7157c1b1648f79991824c4affa24c, type: 3}
+    - {fileID: 21300000, guid: 08ce4c15d0804f6eae15e6b9a28fa2e7, type: 3}
+    - {fileID: 21300000, guid: 66fb6d9e58ce401d8ddc139997b4f969, type: 3}
+    - {fileID: 21300000, guid: e3f5bae0d3de4ec2849946b9de273be7, type: 3}
+    - {fileID: 21300000, guid: ecc40dea73c34ca99fb05d50bb9da895, type: 3}
+    - {fileID: 21300000, guid: ad075ea6523549af966dec264520fb47, type: 3}
+    - {fileID: 21300000, guid: fcbe27568bf74fb9b634592973e6117e, type: 3}
+    - {fileID: 21300000, guid: ccf225715a7e4a0089b0d5b5885238fc, type: 3}
+    frameSeconds: 0.025
+    playbackSpeed: 1
+    frameWeights:
+    - 0.5
+    - 0.6
+    - 0.9
+    - 1
+    - 1.2
+    - 1.2
+    - 1.1
+    - 0.9
+    - 0.4
+    - 0.2
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  run:
+    frames:
+    - {fileID: 21300000, guid: 3a5e0e4b6b4c86c4d956524649d22aef, type: 3}
+    - {fileID: 21300000, guid: 64a5ead13e43df54a8fd879f96922f66, type: 3}
+    - {fileID: 21300000, guid: 73fdabc4d4c463d44a3284ba707bbf52, type: 3}
+    - {fileID: 21300000, guid: 752e8c38f77939f40bc23e43080010bf, type: 3}
+    - {fileID: 21300000, guid: 25d3b4f04e350854ba04b5eaf732bf2b, type: 3}
+    frameSeconds: 0.104
+    playbackSpeed: 0.75
+    frameWeights: []
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  slash:
+    frames:
+    - {fileID: 21300000, guid: 8a6be097ece80934fbdb92a15edc2e9c, type: 3}
+    - {fileID: 21300000, guid: 4ba58aba9b244255999ebca68fa43608, type: 3}
+    - {fileID: 21300000, guid: ed671fbcd1bb9aa48b9dd29fa12ece82, type: 3}
+    - {fileID: 21300000, guid: 6fdf481e8ae24c6aafd5104e024ef967, type: 3}
+    - {fileID: 21300000, guid: 378882021ef8f5e478174d7af401d889, type: 3}
+    - {fileID: 21300000, guid: 8601cc35dba64929bb1671644af7ae03, type: 3}
+    - {fileID: 21300000, guid: e64cd20974b24c52a0e7dd6cc1c3f70d, type: 3}
+    - {fileID: 21300000, guid: 013155b69505ad446ae9b94889c2763b, type: 3}
+    - {fileID: 21300000, guid: a71c0a7935cf41a69599b727705ab3f3, type: 3}
+    - {fileID: 21300000, guid: b3a72ba39c8087c4f91a500ed7ff68c0, type: 3}
+    frameSeconds: 0.025
+    playbackSpeed: 1.5
+    frameWeights:
+    - 0.3
+    - 0.7
+    - 0.6
+    - 0.9
+    - 0.5
+    - 0.5
+    - 0.5
+    - 0.375
+    - 0.375
+    - 0.25
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  chargeEnter:
+    frames:
+    - {fileID: 21300000, guid: 14e2e3a29dd9680458ace8a06362828a, type: 3}
+    - {fileID: 21300000, guid: 1fa8e0f6301b3da49b8b9ca16fe81bd8, type: 3}
+    - {fileID: 21300000, guid: e9e228900d9a6aa428a8cdbfca5e66a8, type: 3}
+    - {fileID: 21300000, guid: 6edbbd3d5d49e764c8de4182e096c47b, type: 3}
+    frameSeconds: 0.075
+    playbackSpeed: 1
+    frameWeights: []
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  chargeHold:
+    frames:
+    - {fileID: 21300000, guid: 6edbbd3d5d49e764c8de4182e096c47b, type: 3}
+    frameSeconds: 0.15
+    playbackSpeed: 1
+    frameWeights: []
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  spin:
+    frames:
+    - {fileID: 21300000, guid: 6edbbd3d5d49e764c8de4182e096c47b, type: 3}
+    - {fileID: 21300000, guid: 345bfc10e15b47a2bb6718c8816fa3c8, type: 3}
+    - {fileID: 21300000, guid: 8b8c7bb8711baff409ee3f06a15504e1, type: 3}
+    - {fileID: 21300000, guid: 19c8c21b82d64168935fcf1a3e0d9cb2, type: 3}
+    - {fileID: 21300000, guid: 58a294be3bd5d25428b45e28613db8de, type: 3}
+    - {fileID: 21300000, guid: 0dc55c98f93c4399bfb07e3d3ed1e159, type: 3}
+    - {fileID: 21300000, guid: bde09b2ef89980a408fdf86222fbb54e, type: 3}
+    - {fileID: 21300000, guid: 433c55f9a54c4c90931f3728d9ddecaa, type: 3}
+    - {fileID: 21300000, guid: edffb7fe254046978bddda8fa90a1865, type: 3}
+    - {fileID: 21300000, guid: 0dbf273548cc1dd41aacb9dba34ba5e6, type: 3}
+    frameSeconds: 0.02
+    playbackSpeed: 1
+    frameWeights:
+    - 0.4
+    - 0.6
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 1
+    - 0.6
+    - 0.4
+    scale: 1.32
+    offset: {x: 0, y: 0.075}
+  crescent:
+    frames:
+    - {fileID: 21300000, guid: 5f9974ce69d86f543b0f39df45a994c7, type: 3}
+    - {fileID: 21300000, guid: 1e12d2ad96c69e8498855b1d73b6f597, type: 3}
+    - {fileID: 21300000, guid: d16384e46c52b9c4da00f8ba5c2542c9, type: 3}
+    frameSeconds: 0.08
+    playbackSpeed: 1
+    frameWeights: []
+    scale: 3
+    offset: {x: 0, y: 0}
+  ring:
+    frames:
+    - {fileID: 21300000, guid: 78d364b267c868043983bfc8f4496dcb, type: 3}
+    - {fileID: 21300000, guid: 3ba91c2564cd3ca4d832eca03880d133, type: 3}
+    - {fileID: 21300000, guid: c2704e838fa5547499ce2e373ae479fe, type: 3}
+    frameSeconds: 0.08
+    playbackSpeed: 1
+    frameWeights: []
+    scale: 1
+    offset: {x: 0, y: 0}
+  crescentSize: {x: 1.2, y: 2}
+  ringDiameterScale: 1.2
+  swordTint: {r: 1, g: 1, b: 1, a: 1}
